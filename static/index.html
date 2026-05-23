@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>SyncTV Mine - 极简高清同步影院</title>
+  <!-- Load Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #080b12;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #101526 0%, #080b12 75%);
+      --surface: rgba(16, 21, 34, 0.68);
+      --surface-border: rgba(255, 255, 255, 0.07);
+      --surface-hover: rgba(255, 255, 255, 0.03);
+      --surface-active: rgba(16, 21, 34, 0.92);
+      --accent: linear-gradient(135deg, #6d28d9 0%, #3730a3 100%);
+      --accent-glow: rgba(109, 40, 217, 0.3);
+      --accent-solid: #6d28d9;
+      --accent-hover: #7c3aed;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-glow: rgba(243, 244, 246, 0.1);
+      --danger: #ef4444;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+      --glow: 0 0 18px rgba(109, 40, 217, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background-color: var(--bg);
+      background-image: var(--bg-gradient);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 99px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-solid);
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+    }
+
+    button {
+      height: 42px;
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 0 16px;
+      color: #fff;
+      background: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.16);
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--surface-border);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    }
+    button.danger:hover {
+      background: #f87171;
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 0 14px;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.25);
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent-solid);
+      box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.16);
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .app {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(380px, 580px);
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #6d28d9 0%, #3730a3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .room-console {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--surface-border);
+      border-radius: 14px;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .theater,
+    .panel {
+      border: 1px solid var(--surface-border);
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+    }
+
+    .theater {
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .source-dock {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 16px;
+      align-items: center;
+      border-bottom: 1px solid var(--surface-border);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .source-row {
+      display: grid;
+      grid-template-columns: 130px minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    .video-frame {
+      position: relative;
+      min-height: 480px;
+      background: #020408;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      max-height: 75vh;
+      background: #000;
+    }
+
+    .empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 24px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .empty strong {
+      display: block;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .empty span {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .sync-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      background: rgba(2, 4, 8, 0.58);
+      backdrop-filter: blur(3px);
+      color: #fff;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .sync-overlay.hidden {
+      display: none;
+    }
+
+    .sync-overlay strong {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .sync-overlay span {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .danmaku-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .danmaku-item {
+      position: absolute;
+      left: 100%;
+      min-width: max-content;
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.6);
+      animation: fly linear forwards;
+    }
+
+    @keyframes fly {
+      to {
+        transform: translateX(calc(-100vw - 100%));
+      }
+    }
+
+    .control-strip {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.15);
+      border-top: 1px solid var(--surface-border);
+    }
+
+    .status-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 6px 14px;
+      border: 1px solid var(--surface-border);
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .dot.ok {
+      background: var(--ok);
+      box-shadow: 0 0 8px var(--ok);
+    }
+
+    .sync-control {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .sync-control input {
+      width: 60px;
+      height: 32px;
+      text-align: center;
+      border-radius: 8px;
+    }
+
+    .side {
+      display: grid;
+      gap: 20px;
+    }
+
+    .panel {
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: -0.2px;
+      border-left: 3px solid var(--accent-solid);
+      padding-left: 10px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      margin-bottom: 14px;
+    }
+
+    .tabs button {
+      height: 36px;
+      color: var(--text-muted);
+      background: transparent;
+      border-radius: 8px;
+      border: none;
+      box-shadow: none;
+    }
+
+    .tabs button:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.03);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tabs button.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.16);
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .resource-list,
+    .log,
+    .history {
+      display: grid;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .resource-item,
+    .log div,
+    .history div {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 14px;
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      font-size: 13px;
+    }
+    
+    .resource-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .resource-item strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .log {
+      max-height: 160px;
+      font-family: 'Outfit', ui-monospace, monospace;
+    }
+
+    .log div {
+      display: block;
+      color: var(--text-muted);
+      word-break: break-all;
+      border-left: 2px solid rgba(255,255,255,0.05);
+      padding-left: 8px;
+      font-size: 13px;
+    }
+
+    .history div {
+      display: block;
+      color: var(--text);
+      word-break: break-all;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* Switch slider design */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--surface-border);
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: var(--accent);
+      border-color: transparent;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Bilibili QR Box improvements */
+    #biliQrBox {
+      align-items: center;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.15);
+      border: 1px dashed var(--surface-border);
+    }
+
+    @media (max-width: 1120px) {
+      .topbar,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        width: min(100% - 20px, 1440px);
+        padding-top: 14px;
+      }
+
+      .room-console,
+      .source-dock,
+      .source-row,
+      .control-strip,
+      .side,
+      .grid2,
+      .grid3 {
+        grid-template-columns: 1fr;
+      }
+
+      .video-frame {
+        min-height: 260px;
+      }
+    }
+
+    /* Floating Theme Toggle Button */
+    .theme-toggle-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      font-size: 20px;
+      transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+      backdrop-filter: blur(12px);
+    }
+    .theme-toggle-btn:hover {
+      transform: scale(1.1);
+      border-color: var(--accent-solid);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .theme-toggle-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Day Mode (Light Mode) Color Overrides */
+    :root.light-mode {
+      --bg: #f4fbfb;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #e0f2f1 0%, #f4fbfb 75%); /* Soft pale mint/teal off-white gradient background */
+      --surface: rgba(255, 255, 255, 0.8);
+      --surface-border: rgba(0, 0, 0, 0.06);
+      --surface-hover: rgba(0, 0, 0, 0.02);
+      --surface-active: rgba(255, 255, 255, 0.95);
+      --accent: linear-gradient(135deg, #009e8e 0%, #007064 100%); /* Gorgeous emerald-teal (#008075) brand gradient */
+      --accent-glow: rgba(0, 128, 117, 0.25);
+      --accent-solid: #008075; /* Exact emerald-teal from image */
+      --accent-hover: #00a896; /* Light emerald teal */
+      --text: #1f2937; /* Clean charcoal text */
+      --text-muted: #526361; /* Soft slate-teal gray for captions */
+      --text-glow: rgba(31, 41, 55, 0.04);
+      --shadow: 0 20px 40px -15px rgba(0, 128, 117, 0.06), 0 0 15px rgba(0, 0, 0, 0.02);
+      --glow: 0 0 20px rgba(0, 128, 117, 0.15);
+    }
+
+    /* Light Mode Component Overrides */
+    :root.light-mode body {
+      color: #1f2937;
+    }
+    :root.light-mode input,
+    :root.light-mode select {
+      background: rgba(255, 255, 255, 0.85);
+      color: #1f2937;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    :root.light-mode input:focus,
+    :root.light-mode select:focus {
+      background: #fff;
+      border-color: var(--accent-solid);
+      box-shadow: 0 0 0 3px rgba(0, 128, 117, 0.15);
+    }
+    :root.light-mode button {
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 128, 117, 0.2);
+    }
+    :root.light-mode button:hover {
+      box-shadow: 0 6px 20px rgba(0, 128, 117, 0.35);
+    }
+    :root.light-mode button.secondary {
+      color: #273b38;
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: none;
+    }
+    :root.light-mode button.secondary:hover {
+      background: rgba(0, 0, 0, 0.07);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+    :root.light-mode .tabs {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+    :root.light-mode .tabs button {
+      color: #4b5563;
+    }
+    :root.light-mode .tabs button:hover {
+      color: #111827;
+      background: rgba(0, 0, 0, 0.02);
+    }
+    :root.light-mode .tabs button.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px rgba(0, 128, 117, 0.25);
+    }
+    :root.light-mode .pill {
+      background: rgba(0, 0, 0, 0.03);
+      color: #3b4e4b;
+      border-color: rgba(0, 0, 0, 0.05);
+    }
+    :root.light-mode .source-dock {
+      background: rgba(0, 0, 0, 0.01);
+      border-bottom-color: rgba(0, 0, 0, 0.05);
+    }
+    :root.light-mode .control-strip {
+      background: rgba(0, 0, 0, 0.01);
+      border-top-color: rgba(0, 0, 0, 0.05);
+    }
+    :root.light-mode .empty strong {
+      color: #111827;
+    }
+    :root.light-mode .resource-item,
+    :root.light-mode .log div,
+    :root.light-mode .history div {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: rgba(0, 0, 0, 0.05);
+    }
+    :root.light-mode .resource-item:hover {
+      background: rgba(0, 128, 117, 0.05);
+      border-color: rgba(0, 128, 117, 0.2);
+    }
+    :root.light-mode .resource-item strong {
+      color: #1f2937;
+    }
+    :root.light-mode .history div {
+      background: rgba(0, 0, 0, 0.02);
+      color: #1f2937;
+      border-color: rgba(0, 0, 0, 0.05);
+    }
+    :root.light-mode .log div {
+      color: #4b5563;
+      border-left-color: rgba(0, 0, 0, 0.1);
+    }
+    :root.light-mode ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.03);
+    }
+    :root.light-mode ::-webkit-scrollbar-thumb {
+      background: rgba(0, 128, 117, 0.2);
+    }
+    :root.light-mode ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-solid);
+    }
+    :root.light-mode .slider {
+      background-color: rgba(0, 0, 0, 0.08);
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+    :root.light-mode .slider:before {
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    :root.light-mode input:checked + .slider {
+      background: var(--accent);
+    }
+    :root.light-mode #biliQrBox {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    :root.light-mode .brand h1 {
+      background: linear-gradient(135deg, #009e8e 0%, #007064 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>SyncTV Mine</h1>
+        <p>轻量级高清影音同步系统 · 极客纯净版</p>
+      </div>
+      <div class="room-console">
+        <input id="roomInput" value="aaaa" placeholder="请输入房间号 (如 a1b2c3)" maxlength="24">
+        <button id="btnJoin">加入房间</button>
+        <button id="btnCreate" class="secondary">创建房间</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="theater">
+        <div class="source-dock">
+          <div class="source-row">
+            <select id="sourceType">
+              <option value="remote">视频直链</option>
+              <option value="local">本地文件</option>
+            </select>
+            <input id="urlInput" placeholder="粘贴 mp4 / m3u8 / webm / mpd 视频链接">
+            <button id="btnLoadUrl">广播共享</button>
+            <button id="btnFile" class="secondary hidden">选择本地视频</button>
+            <input type="file" id="fileInput" accept="video/*,.mkv,.avi,.rmvb,.flv,.wmv">
+          </div>
+          <div id="subRow" class="source-row" style="margin-top: 10px; grid-template-columns: 130px minmax(0, 1fr) auto;">
+            <span style="font-size: 14px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-muted);">外部字幕链接</span>
+            <input id="subUrlInput" placeholder="粘贴 .srt / .vtt / .ass / .ssa 字幕直链 (可选)">
+            <button id="btnLoadSub" class="secondary">加载字幕</button>
+          </div>
+          <span id="sourceMeta" class="muted">播放源未设置</span>
+        </div>
+        <div class="video-frame">
+          <video id="player" controls playsinline></video>
+          <div id="danmakuStage" class="danmaku-stage"></div>
+          <div id="syncOverlay" class="sync-overlay hidden">
+            <div>
+              <strong>&#21516;&#27493;&#20013;</strong>
+              <span id="syncOverlayText">Waiting for clients</span>
+            </div>
+          </div>
+          <div id="videoEmpty" class="empty">
+            <div>
+              <strong>开启你的同步放映</strong>
+              <span>创建/加入房间后共享链接，或从右侧选择 Bilibili / Alist 资源播放</span>
+            </div>
+          </div>
+        </div>
+        <div class="control-strip">
+          <div style="display: flex; gap: 8px;">
+            <button id="btnReady" disabled>我已就绪</button>
+            <button id="btnSpeed" class="secondary">1.0X</button>
+          </div>
+          <div class="status-stack">
+            <span class="pill"><span class="dot" id="connDot"></span><span id="connText">未连接</span></span>
+            <span class="pill" id="roomLabel">未进入房间</span>
+            <span class="pill" id="userCount">0 人在线</span>
+            <span class="pill" id="readyStatus">0 人就绪</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px; justify-content: flex-end;">
+            <div class="toggle-container" style="padding: 0;">
+              <label class="switch">
+                <input type="checkbox" id="driftSyncCheckbox">
+                <span class="slider"></span>
+              </label>
+              <span class="toggle-label">自动微调/硬同步</span>
+            </div>
+            <label class="sync-control">补偿阈值 <input id="compInput" type="number" value="0.5" min="0" max="3" step="0.1"> 秒</label>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>资源账号与解析</h2>
+          <div class="tabs">
+            <button class="tab active" data-tab="bili">Bilibili</button>
+            <button class="tab" data-tab="alist">Alist</button>
+            <button class="tab" data-tab="direct">直链</button>
+          </div>
+
+          <!-- Bilibili Section -->
+          <div id="tab-bili" class="stack">
+            <div class="grid2">
+              <button id="btnBiliQr">扫码登录</button>
+              <button id="btnBiliLogout" class="secondary">退出登录</button>
+            </div>
+            <div id="biliQrBox" class="stack hidden">
+              <img id="biliQrImg" alt="Bilibili 登录二维码">
+              <span id="biliQrText" class="muted">正在生成二维码...</span>
+            </div>
+            <div class="grid2">
+              <input id="biliInput" placeholder="输入 BV 号或 B站视频链接">
+              <button id="btnBiliParse">解析并共享</button>
+            </div>
+            <div class="toggle-container" style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="switch">
+                  <input type="checkbox" id="biliDirectCheckbox">
+                  <span class="slider"></span>
+                </label>
+                <span class="toggle-label">开启直链模式 (省服务器带宽)</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
+              <span class="toggle-label">分辨率清晰度</span>
+              <select id="biliQuality" style="width: 180px; height: 36px; border-radius: 8px;">
+                <option value="120">4K 超清 (大会员)</option>
+                <option value="116">1080P 60帧 (大会员)</option>
+                <option value="80" selected>1080P 高清 (已登录)</option>
+                <option value="64">720P 高清</option>
+                <option value="32">480P 清晰</option>
+                <option value="16">360P 流畅</option>
+              </select>
+            </div>
+            <span id="biliStatus" class="muted">状态读取中</span>
+          </div>
+
+          <!-- Alist Section -->
+          <div id="tab-alist" class="stack hidden">
+            <input id="alistHost" placeholder="Alist 根地址 (如 https://alist.example.com)">
+            <div class="grid2">
+              <input id="alistUser" placeholder="用户名">
+              <input id="alistPass" type="password" placeholder="密码">
+            </div>
+            <div class="grid2">
+              <button id="btnAlistLogin">登录 Alist</button>
+              <button id="btnAlistRoot" class="secondary">根目录</button>
+            </div>
+            <select id="alistAccount"></select>
+            <div class="grid3">
+              <input id="alistPath" value="/百度网盘/SYY/心灵奇旅（2020）中英双语 外挂中英字幕 4K HDR" placeholder="目录路径">
+              <button id="btnAlistList">打开</button>
+              <button id="btnAlistUp" class="secondary">上级</button>
+            </div>
+            <div id="alistList" class="resource-list"></div>
+          </div>
+
+          <!-- Direct Input Section -->
+          <div id="tab-direct" class="stack hidden">
+            <input id="directUrl" placeholder="输入视频直链 URL (mp4, m3u8, mpd 等)">
+            <input id="directTitle" placeholder="视频标题 (可选)">
+            <button id="btnDirectPlay">共享该直链</button>
+          </div>
+        </section>
+
+        <!-- Danmaku Section -->
+        <section class="panel">
+          <h2>房间弹幕</h2>
+          <div class="grid2">
+            <input id="danmakuInput" maxlength="120" placeholder="发送一条友善的弹幕吧...">
+            <button id="btnDanmaku">发送</button>
+          </div>
+          <div id="danmakuHistory" class="history" style="margin-top:12px;"></div>
+        </section>
+
+        <!-- Event logs Section -->
+        <section class="panel">
+          <h2>系统事件日志</h2>
+          <div id="log" class="log"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
+  <script>
+    // Day Mode (Light Mode) Injector and Toggle Handler
+    (function() {
+      const toggle = document.createElement('button');
+      toggle.id = 'themeToggle';
+      toggle.className = 'theme-toggle-btn';
+      toggle.innerHTML = '🌙';
+      toggle.title = '切换日夜模式';
+      document.body.appendChild(toggle);
+      
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      if (savedTheme === 'light') {
+        document.documentElement.classList.add('light-mode');
+        toggle.innerHTML = '☀️';
+      }
+      
+      toggle.addEventListener('click', () => {
+        const isLight = document.documentElement.classList.toggle('light-mode');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        toggle.innerHTML = isLight ? '☀️' : '🌙';
+      });
+    })();
+
+    const $ = id => document.getElementById(id);
+    const player = $('player');
+    let ws = null;
+    let roomID = '';
+    let myUserId = '';
+    let userCount = 0;
+    let readyUsers = new Set();
+    let hls = null;
+    let dashPlayer = null;
+    let localObjectUrl = '';
+    let isSyncing = false;
+    let pendingPlayAfterSeek = false;
+    let pendingProgrammaticSeekCompletion = false;
+    let lastKnownPlayingState = false;
+    let isUserSeeking = false;
+    let lastSentState = null;
+    let wasPlayingBeforeSeek = false;
+    let syncCheckTimer = null;
+    let qrTimer = null;
+    let alistAccounts = [];
+    let roomSpeed = 1.0;
+    let lastDriftAdjustedSpeed = null;
+    let lastTimeUpdateReal = 0;
+    let lastPlayerTime = 0;
+    let pendingSeekSync = null;
+    let seekReadyTimer = null;
+    let seekReadyTimerSeekId = null;
+    const DRIFT_SOFT_THRESHOLD = 0.75;
+    const DRIFT_HARD_THRESHOLD = 3.5;
+    const DRIFT_SPEED_DELTA = 0.1;
+    const STAGGER_DELAY = 500;
+    const SEEK_SYNC_TIMEOUT_MS = 8000;
+    const SEEK_SYNC_READY_TOLERANCE = 0.35;
+
+    function log(msg) {
+      const d = document.createElement('div');
+      d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      $('log').prepend(d);
+    }
+
+    function seekField(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value.toFixed(3) : 'NaN';
+      if (value === undefined) return 'undefined';
+      if (value === null) return 'null';
+      return String(value);
+    }
+
+    function seekSyncLog(event, fields = {}) {
+      const text = `[${event}] ` + Object.entries(fields)
+        .map(([key, value]) => `${key}=${seekField(value)}`)
+        .join(' ');
+      log(text);
+      console.log(`SyncTV ${text}`);
+    }
+
+    async function api(url, options = {}) {
+      const opts = { ...options };
+      opts.headers = { ...(opts.headers || {}) };
+      if (opts.body && typeof opts.body !== 'string') {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(opts.body);
+      }
+      const resp = await fetch(url, opts);
+      const text = await resp.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { detail: text }; }
+      if (!resp.ok) throw new Error(data.detail || data.message || `HTTP ${resp.status}`);
+      return data;
+    }
+
+    function send(obj) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const payload = { clientTs: Date.now() / 1000, ...obj };
+        ws.send(JSON.stringify(payload));
+      }
+      else log('WebSocket 未连接');
+    }
+
+    function formatTime(seconds) {
+      seconds = Number(seconds);
+      if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function setConnected(connected) {
+      $('connDot').className = connected ? 'dot ok' : 'dot';
+      $('connText').textContent = connected ? '已连接' : '未连接';
+    }
+
+    function updateVideoEmpty() {
+      $('videoEmpty').style.display = player.currentSrc ? 'none' : 'grid';
+    }
+
+    function updateRoomStats() {
+      $('userCount').textContent = `${userCount} 人在线`;
+      $('readyStatus').textContent = `${readyUsers.size} 人就绪`;
+      $('btnReady').disabled = !player.currentSrc || readyUsers.has(myUserId) || !ws || ws.readyState !== WebSocket.OPEN;
+      $('btnReady').textContent = readyUsers.has(myUserId) ? '已就绪' : '我已加载';
+    }
+
+    function setSyncOverlay(visible, text) {
+      const overlay = $('syncOverlay');
+      if (!overlay) return;
+      overlay.classList.toggle('hidden', !visible);
+      if (text) $('syncOverlayText').textContent = text;
+    }
+
+    function newSeekSyncId() {
+      return `${myUserId || 'local'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function resetReady() {
+      readyUsers = new Set();
+      updateRoomStats();
+    }
+
+    function setSourceMeta(source) {
+      const kind = source?.kind || 'none';
+      const title = source?.title || source?.url || '';
+      let text = kind === 'none' ? '播放源未设置' : `${kind === 'local' ? '本地' : '远程'} · ${title}`;
+      if (source?.subtitle) {
+        text += ` (字幕: ${source.subtitleTitle || source.subtitle})`;
+      }
+      $('sourceMeta').textContent = text;
+    }
+
+    function loadRemoteSource(source) {
+      const url = String(source?.url || '').trim();
+      if (!url) return;
+      
+      // Clear subtitle track and input when a new video source is loaded
+      const tracks = player.querySelectorAll('track');
+      tracks.forEach(track => track.remove());
+      $('subUrlInput').value = '';
+
+      if (localObjectUrl) {
+        URL.revokeObjectURL(localObjectUrl);
+        localObjectUrl = '';
+      }
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+      if (dashPlayer) {
+        dashPlayer.reset();
+        dashPlayer = null;
+      }
+      player.pause();
+      player.removeAttribute('src');
+      player.load();
+
+      let managedByDash = false;
+      if (/\.m3u8(\?|#|$)/i.test(url)) {
+        if (player.canPlayType('application/vnd.apple.mpegurl')) {
+          player.src = url;
+        } else if (window.Hls && Hls.isSupported()) {
+          hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+          hls.loadSource(url);
+          hls.attachMedia(player);
+          hls.on(Hls.Events.ERROR, (_, data) => log(`HLS 错误：${data.details}`));
+        } else {
+          alert('当前浏览器无法播放 m3u8');
+          return;
+        }
+      } else if (/\.mpd(\?|#|$)|\/mpd\//i.test(url)) {
+        if (!window.dashjs) {
+          alert('当前浏览器无法加载 DASH 播放器');
+          return;
+        }
+        const supported = [];
+        if (window.MediaSource && typeof MediaSource.isTypeSupported === 'function') {
+          if (MediaSource.isTypeSupported('video/mp4; codecs="av01.0.00M.08"')) supported.push('av01');
+          if (MediaSource.isTypeSupported('video/mp4; codecs="hev1.1.6.L150.90"')) supported.push('hev1');
+          if (MediaSource.isTypeSupported('video/mp4; codecs="avc1.640033"')) supported.push('avc1');
+        }
+        const codecsParam = supported.join(',');
+        const finalUrl = `${url}${url.includes('?') ? '&' : '?'}codecs=${codecsParam}`;
+        dashPlayer = dashjs.MediaPlayer().create();
+        dashPlayer.updateSettings({ streaming: { buffer: { fastSwitchEnabled: true } } });
+        dashPlayer.initialize(player, `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}_=${Date.now()}`, false);
+        dashPlayer.on(dashjs.MediaPlayer.events.ERROR, e => {
+          let detail;
+          try { detail = JSON.stringify(e, Object.getOwnPropertyNames(e)).slice(0, 300); } catch { detail = String(e); }
+          log(`DASH 错误：${detail}`);
+        });
+        managedByDash = true;
+      } else {
+        player.src = url.startsWith('/api/proxy/') ? `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}` : url;
+      }
+      if (!managedByDash && !player._isMocked) player.load();
+      updateVideoEmpty();
+      log(`加载播放源：${source.title || url}`);
+    }
+
+    function shareRemote(url, title) {
+      if (!url) return alert('请输入视频链接');
+      if (!ws || ws.readyState !== WebSocket.OPEN) return alert('请先加入房间');
+      send({ type: 'source', kind: 'remote', url, title: title || url.split('/').pop() || url });
+    }
+
+    function connect(room) {
+      if (ws) ws.close();
+      roomID = room;
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}/ws?room=${encodeURIComponent(roomID)}`);
+      ws.onopen = () => {
+        setConnected(true);
+        $('roomLabel').textContent = `房间 ${roomID}`;
+        log(`已进入房间 ${roomID}`);
+        startDriftCheck();
+        updateRoomStats();
+      };
+      ws.onclose = () => {
+        setConnected(false);
+        log('房间连接断开');
+        if (syncCheckTimer) clearInterval(syncCheckTimer);
+        if (seekReadyTimer) {
+          clearInterval(seekReadyTimer);
+          seekReadyTimer = null;
+          seekReadyTimerSeekId = null;
+        }
+        pendingSeekSync = null;
+        setSyncOverlay(false);
+        if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
+          window.AndroidBridge.setActiveSeekId("");
+        }
+        updateRoomStats();
+      };
+      ws.onmessage = e => {
+        let msg;
+        try { msg = JSON.parse(e.data); } catch { return; }
+        handleMessage(msg);
+      };
+    }
+
+    function handleMessage(msg) {
+      if (typeof msg.count === 'number') userCount = msg.count;
+      if (Array.isArray(msg.readyUsers)) readyUsers = new Set(msg.readyUsers);
+      if (msg.source) setSourceMeta(msg.source);
+
+      switch (msg.type) {
+        case 'welcome':
+          myUserId = msg.userId;
+          $('roomLabel').textContent = `房间 ${msg.room}`;
+          if (msg.source?.kind === 'remote') loadRemoteSource(msg.source);
+          if (msg.source?.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
+          renderDanmakuHistory(msg.danmaku || []);
+          break;
+        case 'user-join':
+          log('有人加入房间');
+          break;
+        case 'user-leave':
+          log('有人离开房间');
+          break;
+        case 'source':
+          resetReady();
+          if (msg.source?.kind === 'remote') loadRemoteSource(msg.source);
+          else log('房间切换为本地视频，请选择同一文件');
+          if (msg.source?.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
+          break;
+        case 'subtitle':
+          if (msg.from === myUserId) return;
+          loadSubtitle(msg.url, msg.title);
+          break;
+        case 'ready':
+        case 'ready-state':
+          if (userCount > 1 && readyUsers.size >= userCount) {
+            log('全员就绪，开始同步播放');
+            const targetSpeed = lastSentState?.speed || 1.0;
+            roomSpeed = targetSpeed;
+            applyRemoteSync(true, 0, targetSpeed);
+            lastSentState = { playing: true, time: 0, speed: targetSpeed, ts: Date.now() };
+          }
+          break;
+        case 'status':
+          if (msg.from === myUserId) return;
+          const isLocalSeeking = player._isMocked
+            ? (player.mpvState && player.mpvState.seeking)
+            : player.seeking;
+          if (pendingSeekSync || isLocalSeeking) {
+            console.log("正在同步或本地拖动中，忽略状态更新消息");
+            break;
+          }
+          const remoteSpeed = typeof msg.speed === 'number' ? msg.speed : 1.0;
+          roomSpeed = remoteSpeed;
+          const remotePlaying = !!msg.playing;
+          const remoteTime = Number(msg.time || 0);
+          
+          lastSentState = { playing: remotePlaying, time: remoteTime, speed: remoteSpeed, ts: Date.now() };
+          
+          const localPlaying = !player.paused;
+          const stateChanged = localPlaying !== remotePlaying;
+          const driftSyncEnabled = $('driftSyncCheckbox') ? $('driftSyncCheckbox').checked : false;
+          
+          if (stateChanged) {
+            log(`收到状态更新：播放状态变更 (${localPlaying ? '播放' : '暂停'} -> ${remotePlaying ? '播放' : '暂停'})，执行同步`);
+            applyRemoteSync(remotePlaying, remoteTime, remoteSpeed);
+          } else {
+            // 播放状态一致时，只有开启了自动微调/硬同步，且漂移超过阈值，才执行硬同步
+            if (driftSyncEnabled) {
+              const timeDiff = Math.abs(player.currentTime - remoteTime);
+              const hardThreshold = player._isMocked ? 8.0 : DRIFT_HARD_THRESHOLD;
+              if (timeDiff > hardThreshold) {
+                log(`收到状态更新：检测到较大漂移 (${timeDiff.toFixed(1)}s)，执行硬同步`);
+                applyRemoteSync(remotePlaying, remoteTime, remoteSpeed);
+              }
+            } else {
+              // 未开启硬同步时，绝不主动执行 seek，仅在房间基准速度变化时更新本地速度
+              if (player.playbackRate !== remoteSpeed && !lastDriftAdjustedSpeed) {
+                player.playbackRate = remoteSpeed;
+              }
+            }
+          }
+          updateSpeedButtonText(remoteSpeed);
+          break;
+        case 'seek-sync-start':
+          handleSeekSyncStart(msg);
+          break;
+        case 'seek-sync-progress':
+          handleSeekSyncProgress(msg);
+          break;
+        case 'seek-sync-timeout':
+          handleSeekSyncTimeout(msg);
+          break;
+        case 'seek-sync-complete':
+          handleSeekSyncComplete(msg);
+          break;
+        case 'danmaku':
+          if (msg.item) {
+            addDanmakuToHistory(msg.item);
+            flyDanmaku(msg.item.text, msg.item.color);
+          }
+          break;
+      }
+      updateRoomStats();
+    }
+
+    function handleSeekSyncStart(msg) {
+      const seekId = String(msg.seekId || '');
+      if (!seekId) return;
+      if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
+        window.AndroidBridge.setActiveSeekId(seekId);
+      }
+      if (player._isMocked && player.mpvState) {
+        player.mpvState.seeking = true;
+        if (msg.from !== myUserId) {
+          player.mpvState.bufferProbing = true;
+        }
+      }
+      const targetSpeed = typeof msg.speed === 'number' ? msg.speed : roomSpeed;
+      const targetTime = Number(msg.time || 0);
+      const shouldPlay = !!msg.playing;
+      seekSyncLog('seek-start', {
+        roomId: roomID,
+        seekId,
+        from: msg.from,
+        clientId: myUserId,
+        targetTime,
+        currentTime: player.currentTime,
+        playing: shouldPlay,
+        speed: targetSpeed,
+        readyCount: msg.readyCount || 0,
+        count: msg.count || userCount || 1
+      });
+      roomSpeed = targetSpeed;
+      pendingSeekSync = {
+        id: seekId,
+        time: targetTime,
+        speed: targetSpeed,
+        playing: shouldPlay,
+        readySent: false,
+        startedAt: Date.now(),
+        lastProbeLogAt: 0,
+        from: msg.from
+      };
+      setSyncOverlay(true, `Waiting for clients (${msg.readyCount || 0}/${msg.count || userCount || 1})`);
+
+      if (msg.from !== myUserId) {
+        isSyncing = true;
+        player.playbackRate = targetSpeed;
+        player.pause();
+        player.currentTime = Math.max(0, targetTime);
+        setTimeout(() => { isSyncing = false; }, 500);
+      }
+      scheduleSeekSyncReady(seekId);
+    }
+
+    function handleSeekSyncProgress(msg) {
+      if (!pendingSeekSync || pendingSeekSync.id !== msg.seekId) return;
+      seekSyncLog('seek-progress', {
+        roomId: roomID,
+        seekId: msg.seekId,
+        clientId: myUserId,
+        targetTime: pendingSeekSync.time,
+        currentTime: player.currentTime,
+        playing: pendingSeekSync.playing,
+        speed: pendingSeekSync.speed,
+        readyCount: msg.readyCount || 0,
+        count: msg.count || userCount || 1
+      });
+      setSyncOverlay(true, `Waiting for clients (${msg.readyCount || 0}/${msg.count || userCount || 1})`);
+    }
+
+    let autoplayBanner = null;
+    let mutedByAutoplayFallback = false;
+    let mutedBeforeAutoplayFallback = false;
+
+    function showMuteAutoplayBanner() {
+      if (autoplayBanner) return;
+      autoplayBanner = document.createElement('div');
+      autoplayBanner.id = 'autoplay-banner';
+      autoplayBanner.style.position = 'fixed';
+      autoplayBanner.style.top = '20px';
+      autoplayBanner.style.left = '50%';
+      autoplayBanner.style.transform = 'translateX(-50%)';
+      autoplayBanner.style.backgroundColor = 'rgba(255, 152, 0, 0.95)';
+      autoplayBanner.style.color = '#fff';
+      autoplayBanner.style.padding = '12px 24px';
+      autoplayBanner.style.borderRadius = '8px';
+      autoplayBanner.style.zIndex = '99999';
+      autoplayBanner.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      autoplayBanner.style.fontSize = '14px';
+      autoplayBanner.style.fontWeight = 'bold';
+      autoplayBanner.style.cursor = 'pointer';
+      autoplayBanner.style.textAlign = 'center';
+      autoplayBanner.innerHTML = '🔊 浏览器限制自动播放，已静音同步。点击此处或页面任意位置恢复声音';
+      
+      const removeBanner = () => {
+        if (mutedByAutoplayFallback) {
+          player.muted = mutedBeforeAutoplayFallback;
+        }
+        mutedByAutoplayFallback = false;
+        if (autoplayBanner) {
+          autoplayBanner.remove();
+          autoplayBanner = null;
+        }
+        document.removeEventListener('click', removeBanner);
+        document.removeEventListener('keydown', removeBanner);
+      };
+
+      autoplayBanner.addEventListener('click', removeBanner);
+      document.addEventListener('click', removeBanner);
+      document.addEventListener('keydown', removeBanner);
+      
+      document.body.appendChild(autoplayBanner);
+    }
+
+    function robustPlay() {
+      if (player._isMocked) {
+        return player.play().catch(() => {});
+      }
+      return player.play().catch(err => {
+        console.warn('SyncTV Play failed:', err);
+        if (err && err.name === 'NotAllowedError' && !player.muted) {
+          mutedBeforeAutoplayFallback = player.muted;
+          player.muted = true;
+          mutedByAutoplayFallback = true;
+          return player.play().then(() => {
+            log('已通过静音绕过浏览器自动播放限制，点击页面任意位置恢复声音');
+            showMuteAutoplayBanner();
+          }).catch(e => {
+            console.error('Muted play failed:', e);
+          });
+        } else {
+          log(`播放失败：${err?.message || err || 'unknown'}`);
+        }
+      });
+    }
+
+    function completePendingProgrammaticSeek(reason) {
+      if (!pendingProgrammaticSeekCompletion && !isSyncing) return;
+      pendingProgrammaticSeekCompletion = false;
+      const shouldPlay = !!pendingPlayAfterSeek;
+      pendingPlayAfterSeek = false;
+
+      setTimeout(() => {
+        if (shouldPlay) {
+          log(`${reason || 'sync'} 后自动开始播放 (延迟0.3s对齐)`);
+          robustPlay();
+        }
+        setSyncOverlay(false);
+        setTimeout(() => { isSyncing = false; }, 300);
+      }, 300);
+    }
+
+    function scheduleProgrammaticSeekFallback(targetTime, reason) {
+      if (player._isMocked) return;
+      const startedAt = Date.now();
+      const maxWaitMs = 1500;
+
+      const check = () => {
+        if (!isSyncing) return;
+        if (player._isMocked) return;
+
+        const closeEnough = Number.isFinite(targetTime)
+          ? Math.abs(player.currentTime - targetTime) <= SEEK_SYNC_READY_TOLERANCE
+          : true;
+
+        const seekDone = !player.seeking;
+        const timedOut = Date.now() - startedAt >= maxWaitMs;
+
+        if ((seekDone && closeEnough) || timedOut) {
+          seekSyncLog('programmatic-seek-fallback', {
+            reason,
+            targetTime,
+            currentTime: player.currentTime,
+            closeEnough,
+            seeking: player.seeking,
+            timedOut,
+            pendingPlayAfterSeek
+          });
+          completePendingProgrammaticSeek(timedOut ? `${reason || 'sync'} fallback` : reason);
+          return;
+        }
+
+        setTimeout(check, 100);
+      };
+
+      setTimeout(check, 100);
+    }
+
+    function finishSeekPlayback(shouldPlay, targetTime, targetSpeed, reason) {
+      isSyncing = true;
+      lastKnownPlayingState = shouldPlay;
+      player.playbackRate = targetSpeed;
+      player.pause();
+      if (Number.isFinite(targetTime)) {
+        const compensation = parseFloat($('compInput').value) || 0;
+        if (player._isMocked) {
+          player.currentTime = Math.max(0, targetTime + (shouldPlay ? compensation * targetSpeed : 0));
+          setTimeout(() => {
+            if (shouldPlay) {
+              log(reason === 'timeout' ? 'Timeout后自动开始播放' : '自动开始播放');
+              player.play().catch(() => {});
+            }
+            setTimeout(() => { isSyncing = false; }, 300);
+          }, 300);
+        } else {
+          pendingProgrammaticSeekCompletion = true;
+          pendingPlayAfterSeek = shouldPlay;
+          const finalTime = Math.max(0, targetTime + (shouldPlay ? compensation * targetSpeed : 0));
+          player.currentTime = finalTime;
+          scheduleProgrammaticSeekFallback(finalTime, reason);
+        }
+      } else {
+        pendingProgrammaticSeekCompletion = true;
+        pendingPlayAfterSeek = shouldPlay;
+        completePendingProgrammaticSeek(reason);
+      }
+    }
+
+    function handleSeekSyncTimeout(msg) {
+      if (pendingSeekSync && pendingSeekSync.id !== msg.seekId) return;
+      if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
+        window.AndroidBridge.setActiveSeekId("");
+      }
+      if (seekReadyTimer) {
+        clearInterval(seekReadyTimer);
+        seekReadyTimer = null;
+        seekReadyTimerSeekId = null;
+      }
+      const targetSpeed = typeof msg.speed === 'number' ? msg.speed : roomSpeed;
+      const targetTime = Number(msg.time || 0);
+      const shouldPlay = !!msg.playing;
+
+      seekSyncLog('seek-timeout', {
+        roomId: roomID,
+        seekId: msg.seekId,
+        clientId: myUserId,
+        targetTime,
+        currentTime: player.currentTime,
+        playing: shouldPlay,
+        speed: targetSpeed,
+        readyCount: msg.readyCount || 0,
+        count: msg.count || userCount || 1,
+        notReadyUsers: Array.isArray(msg.notReadyUsers) ? msg.notReadyUsers.join(',') : ''
+      });
+      pendingSeekSync = null;
+      roomSpeed = targetSpeed;
+      lastDriftAdjustedSpeed = null;
+      lastSentState = { playing: shouldPlay, time: targetTime, speed: targetSpeed, ts: Date.now() };
+
+      setSyncOverlay(true, `加载超时：${msg.readyCount || 0}/${msg.count || userCount || 1} 已就绪`);
+      log(`同步超时 (加载超时)：${msg.readyCount || 0}/${msg.count || userCount || 1} 客户端已就绪`);
+      
+      finishSeekPlayback(shouldPlay, targetTime, targetSpeed, 'timeout');
+
+      setTimeout(() => setSyncOverlay(false), 3000);
+    }
+
+    function handleSeekSyncComplete(msg) {
+      if (pendingSeekSync && pendingSeekSync.id !== msg.seekId) return;
+      if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
+        window.AndroidBridge.setActiveSeekId("");
+      }
+      if (seekReadyTimer) {
+        clearInterval(seekReadyTimer);
+        seekReadyTimer = null;
+        seekReadyTimerSeekId = null;
+      }
+      const targetSpeed = typeof msg.speed === 'number' ? msg.speed : roomSpeed;
+      const targetTime = Number(msg.time || 0);
+      const shouldPlay = !!msg.playing;
+      seekSyncLog('seek-complete', {
+        roomId: roomID,
+        seekId: msg.seekId,
+        clientId: myUserId,
+        targetTime,
+        currentTime: player.currentTime,
+        playing: shouldPlay,
+        speed: targetSpeed,
+        readyCount: msg.readyCount || 0,
+        count: msg.count || userCount || 1,
+        reason: msg.reason || ''
+      });
+      pendingSeekSync = null;
+      roomSpeed = targetSpeed;
+      lastDriftAdjustedSpeed = null;
+      lastSentState = { playing: shouldPlay, time: targetTime, speed: targetSpeed, ts: Date.now() };
+      setSyncOverlay(true, msg.reason === 'timeout' ? 'Timeout, continuing sync' : 'All clients ready');
+      
+      finishSeekPlayback(shouldPlay, targetTime, targetSpeed, 'complete');
+      
+      if (player._isMocked) {
+        setTimeout(() => setSyncOverlay(false), 300);
+      }
+    }
+
+    function sendSeekSyncReady(seekId) {
+      if (!pendingSeekSync || pendingSeekSync.id !== seekId || pendingSeekSync.readySent) return;
+      pendingSeekSync.readySent = true;
+      seekSyncLog('seek-ready', {
+        roomId: roomID,
+        seekId,
+        clientId: myUserId,
+        targetTime: pendingSeekSync.time,
+        currentTime: player.currentTime,
+        playing: pendingSeekSync.playing,
+        speed: pendingSeekSync.speed,
+        readyCount: readyUsers.size,
+        count: userCount || 1
+      });
+      send({ type: 'seek-sync-ready', seekId, time: player.currentTime });
+      setSyncOverlay(true, 'This client is ready');
+    }
+
+    function isWebVideoReady(video, target, minForwardBuffer = 0.5, context = {}) {
+      const closeEnough = Math.abs(video.currentTime - target) < 0.25;
+      const hasFutureData = video.readyState >= 3; // HAVE_FUTURE_DATA
+      
+      let bufferedEnough = false;
+      for (let i = 0; i < video.buffered.length; i++) {
+        const start = video.buffered.start(i);
+        const end = video.buffered.end(i);
+        if (start <= target + 0.1 && end >= target + minForwardBuffer) {
+          bufferedEnough = true;
+          break;
+        }
+      }
+      const ready = !video.seeking && closeEnough && hasFutureData && bufferedEnough;
+      if (context.logProbe) {
+        seekSyncLog('probe', {
+          seekId: context.seekId,
+          target,
+          currentTime: video.currentTime,
+          closeEnough,
+          isMocked: !!video._isMocked,
+          seeking: video.seeking,
+          pausedForCache: false,
+          cacheBufferingState: `readyState:${video.readyState}`,
+          hasVideoOut: hasFutureData,
+          eofReached: video.ended,
+          ready,
+          stableCount: context.stableCount || 0,
+          reason: ready ? 'ready' : `seeking:${video.seeking},close:${closeEnough},future:${hasFutureData},buffer:${bufferedEnough}`
+        });
+      }
+      return ready;
+    }
+
+    function isMpvReady(state, target, options = {}) {
+      if (!state) {
+        if (options.logProbe) {
+          seekSyncLog('probe', {
+            seekId: options.seekId,
+            target,
+            currentTime: options.currentTime,
+            closeEnough: false,
+            isMocked: true,
+            seeking: 'unknown',
+            pausedForCache: 'unknown',
+            cacheBufferingState: 'unknown',
+            hasVideoOut: 'unknown',
+            eofReached: 'unknown',
+            bufferProbing: 'unknown',
+            ready: false,
+            stableCount: options.stableCount || 0,
+            reason: 'missing-mpv-state'
+          });
+        }
+        return false;
+      }
+      const tolerance = options.tolerance ?? 0.35;
+      const seekDone = state.seeking === false;
+      // Use mockCurrentTime or state.timePos equivalent. Mocked player updates mockCurrentTime.
+      const timeReady = true; // currentTime is checked externally by scheduleSeekSyncReady
+      const hasVideoOutput = !!state.hasVideoOut;
+      const notCachePaused = state.pausedForCache !== true;
+      const cacheFillReady = state.cacheBufferingState == null || state.cacheBufferingState >= 100;
+      const notEof = state.eofReached !== true || options.allowEof === true;
+      const notBufferProbing = state.bufferProbing !== true;
+      const ready = seekDone && timeReady && hasVideoOutput && notCachePaused && cacheFillReady && notEof && notBufferProbing;
+
+      if (options.logProbe) {
+        const closeEnough = typeof options.closeEnough === 'boolean'
+          ? options.closeEnough
+          : Math.abs((options.currentTime || 0) - target) <= tolerance;
+        seekSyncLog('probe', {
+          seekId: options.seekId,
+          target,
+          currentTime: options.currentTime,
+          closeEnough,
+          isMocked: true,
+          seeking: state.seeking,
+          pausedForCache: state.pausedForCache,
+          cacheBufferingState: state.cacheBufferingState,
+          hasVideoOut: state.hasVideoOut,
+          eofReached: state.eofReached,
+          bufferProbing: state.bufferProbing,
+          ready,
+          stableCount: options.stableCount || 0,
+          reason: ready ? 'ready' : `seekDone:${seekDone},video:${hasVideoOutput},cachePaused:${!notCachePaused},cacheFill:${cacheFillReady},eofOk:${notEof},probing:${!notBufferProbing}`
+        });
+      }
+      return ready;
+    }
+
+    function isPlayerBusy() {
+      if (player._isMocked && player.mpvState) {
+        return player.mpvState.seeking || player.mpvState.pausedForCache || player.mpvState.bufferProbing;
+      }
+      if (!player.currentSrc && !player._isMocked) return false;
+      return player.seeking || player.readyState < 3;
+    }
+
+    function scheduleSeekSyncReady(seekId) {
+      if (seekReadyTimer) {
+        if (seekReadyTimerSeekId === seekId) return;
+        clearInterval(seekReadyTimer);
+        seekReadyTimer = null;
+        seekReadyTimerSeekId = null;
+      }
+      let stableCount = 0;
+      let lastScreenshotAttempt = 0;
+      seekSyncLog('schedule-ready', {
+        roomId: roomID,
+        seekId,
+        clientId: myUserId,
+        targetTime: pendingSeekSync?.time,
+        currentTime: player.currentTime,
+        playing: pendingSeekSync?.playing,
+        speed: pendingSeekSync?.speed,
+        readyCount: readyUsers.size,
+        count: userCount || 1
+      });
+      seekReadyTimerSeekId = seekId;
+      
+      seekReadyTimer = setInterval(() => {
+        if (!pendingSeekSync || pendingSeekSync.id !== seekId) {
+          clearInterval(seekReadyTimer);
+          seekReadyTimer = null;
+          seekReadyTimerSeekId = null;
+          return;
+        }
+        
+        const target = pendingSeekSync.time;
+        const timedOut = Date.now() - pendingSeekSync.startedAt > SEEK_SYNC_TIMEOUT_MS;
+        const now = Date.now();
+        const shouldLogProbe = now - (pendingSeekSync.lastProbeLogAt || 0) >= 1000;
+        if (shouldLogProbe) pendingSeekSync.lastProbeLogAt = now;
+        
+        if (timedOut) {
+          clearInterval(seekReadyTimer);
+          seekReadyTimer = null;
+          seekReadyTimerSeekId = null;
+          seekSyncLog('probe-timeout', {
+            roomId: roomID,
+            seekId,
+            clientId: myUserId,
+            targetTime: target,
+            currentTime: player.currentTime,
+            playing: pendingSeekSync.playing,
+            speed: pendingSeekSync.speed,
+            readyCount: readyUsers.size,
+            count: userCount || 1
+          });
+          log('本地对齐超时，已停止就绪状态检测，等待服务器超时广播');
+          return;
+        }
+
+        let isReady = false;
+        
+        if (player._isMocked && player.mpvState) {
+          if (window.AndroidBridge && typeof AndroidBridge.requestMpvState === 'function') {
+             AndroidBridge.requestMpvState(); // Actively poll MPV state
+          }
+          const mpvCurrentTime = typeof player.mpvState?.timePos === 'number'
+            ? player.mpvState.timePos
+            : NaN;
+          const closeEnough = Math.abs(mpvCurrentTime - target) <= 0.35;
+          isReady = closeEnough && isMpvReady(player.mpvState, target, {
+            seekId,
+            currentTime: mpvCurrentTime,
+            closeEnough,
+            stableCount,
+            logProbe: shouldLogProbe
+          });
+          if (!isReady && shouldLogProbe && (!player.mpvState || closeEnough === false)) {
+            seekSyncLog('probe', {
+              seekId,
+              target,
+              currentTime: mpvCurrentTime,
+              closeEnough,
+              isMocked: true,
+              seeking: player.mpvState?.seeking,
+              pausedForCache: player.mpvState?.pausedForCache,
+              cacheBufferingState: player.mpvState?.cacheBufferingState,
+              hasVideoOut: player.mpvState?.hasVideoOut,
+              eofReached: player.mpvState?.eofReached,
+              ready: false,
+              stableCount,
+              reason: 'time-not-close-or-missing-state'
+            });
+          }
+        } else {
+          isReady = isWebVideoReady(player, target, 0.5, {
+            seekId,
+            stableCount,
+            logProbe: shouldLogProbe
+          });
+        }
+
+        if (isReady) {
+          stableCount++;
+          const requiredTicks = window.AndroidBridge ? 3 : 2; 
+          if (stableCount >= requiredTicks) {
+            clearInterval(seekReadyTimer);
+            seekReadyTimer = null;
+            seekReadyTimerSeekId = null;
+            sendSeekSyncReady(seekId);
+          }
+        } else {
+          stableCount = 0;
+        }
+      }, 250);
+    }
+
+    function startSeekSync(time, playing, speed) {
+      if (pendingSeekSync) {
+        seekSyncLog('seek-start-ignored-local', {
+          seekId: pendingSeekSync.id,
+          targetTime: pendingSeekSync.time,
+          currentTime: player.currentTime,
+          reason: 'pending-active'
+        });
+        return;
+      }
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        sendState(playing, time, 'seek');
+        return;
+      }
+      const seekId = newSeekSyncId();
+      if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
+        window.AndroidBridge.setActiveSeekId(seekId);
+      }
+      if (player._isMocked && player.mpvState) {
+        player.mpvState.seeking = true;
+      }
+      pendingSeekSync = {
+        id: seekId,
+        time,
+        speed,
+        playing,
+        readySent: false,
+        startedAt: Date.now(),
+        lastProbeLogAt: 0,
+        from: myUserId
+      };
+      setSyncOverlay(true, 'Syncing, waiting for clients');
+      const oldSyncing = isSyncing;
+      isSyncing = true;
+      player.pause();
+      isSyncing = oldSyncing;
+      lastDriftAdjustedSpeed = null;
+      lastSentState = { playing: false, time, speed, ts: Date.now() };
+      seekSyncLog('seek-start-local', {
+        roomId: roomID,
+        seekId,
+        clientId: myUserId,
+        targetTime: time,
+        currentTime: player.currentTime,
+        playing,
+        speed,
+        readyCount: readyUsers.size,
+        count: userCount || 1
+      });
+      send({ type: 'seek-sync-start', seekId, time, playing, speed, timeoutMs: SEEK_SYNC_TIMEOUT_MS });
+      scheduleSeekSyncReady(seekId);
+    }
+
+    function shouldSend(playing, time, speed) {
+      if (isSyncing) return false;
+      if (lastSentState && 
+          lastSentState.playing === playing && 
+          Math.abs(lastSentState.time - time) < 2 &&
+          lastSentState.speed === speed) return false;
+      return true;
+    }
+
+    function sendState(playing, time, reason) {
+      const speed = roomSpeed;
+      if (!shouldSend(playing, time, speed)) return;
+      lastSentState = { playing, time, speed, ts: Date.now() };
+      send({ type: 'status', playing, time, speed, reason });
+    }
+
+    function applyRemoteSync(playing, time, speed) {
+      isSyncing = true;
+      lastKnownPlayingState = playing;
+      const targetSpeed = typeof speed === 'number' ? speed : 1.0;
+      player.playbackRate = targetSpeed;
+      player.pause();
+      if (Number.isFinite(time)) {
+        const compensation = parseFloat($('compInput').value) || 0;
+        if (player._isMocked) {
+          player.currentTime = Math.max(0, time + (playing ? compensation * targetSpeed : 0));
+          setTimeout(() => {
+            if (playing) player.play().catch(() => { });
+            setTimeout(() => { isSyncing = false; }, 300);
+          }, 50);
+        } else {
+          pendingProgrammaticSeekCompletion = true;
+          pendingPlayAfterSeek = playing;
+          const finalTime = Math.max(0, time + (playing ? compensation * targetSpeed : 0));
+          player.currentTime = finalTime;
+          scheduleProgrammaticSeekFallback(finalTime, 'remote-sync');
+        }
+      } else {
+        pendingProgrammaticSeekCompletion = true;
+        pendingPlayAfterSeek = playing;
+        completePendingProgrammaticSeek('remote-sync');
+      }
+    }
+
+    function startDriftCheck() {
+      if (syncCheckTimer) clearInterval(syncCheckTimer);
+      syncCheckTimer = setInterval(() => {
+        const targetSpeed = roomSpeed;
+        const driftSyncEnabled = $('driftSyncCheckbox') ? $('driftSyncCheckbox').checked : false;
+        if (!driftSyncEnabled) {
+          if (player.playbackRate !== targetSpeed) {
+            lastDriftAdjustedSpeed = null;
+            player.playbackRate = targetSpeed;
+          }
+          return;
+        }
+        if (userCount <= 1 || isSyncing || pendingSeekSync || isPlayerBusy() || !lastSentState || !lastSentState.playing || player.paused) {
+          if (player.playbackRate !== targetSpeed) {
+            lastDriftAdjustedSpeed = null;
+            player.playbackRate = targetSpeed;
+          }
+          return;
+        }
+        const expected = lastSentState.time + (Date.now() - lastSentState.ts) / 1000 * targetSpeed;
+        const diff = player.currentTime - expected;
+        const absDiff = Math.abs(diff);
+
+        const hardThreshold = player._isMocked ? 8.0 : DRIFT_HARD_THRESHOLD;
+
+        if (absDiff > hardThreshold) {
+          log(`漂移过大 (${absDiff.toFixed(1)}s)，执行硬同步`);
+          lastDriftAdjustedSpeed = null;
+          player.playbackRate = targetSpeed;
+          applyRemoteSync(true, expected, targetSpeed);
+        } else if (absDiff > DRIFT_SOFT_THRESHOLD) {
+          let speedDelta = DRIFT_SPEED_DELTA;
+          if (player._isMocked) {
+            if (absDiff > 5.0) {
+              speedDelta = 0.20;
+            } else if (absDiff > 3.0) {
+              speedDelta = 0.15;
+            }
+          }
+          if (diff < 0) {
+            const adjSpeed = parseFloat((targetSpeed + speedDelta).toFixed(2));
+            if (player.playbackRate !== adjSpeed) {
+              log(`微调播放速度: ${adjSpeed}x (落后 ${absDiff.toFixed(1)}s)`);
+              lastDriftAdjustedSpeed = adjSpeed;
+              player.playbackRate = adjSpeed;
+            }
+          } else {
+            const adjSpeed = parseFloat((targetSpeed - speedDelta).toFixed(2));
+            if (player.playbackRate !== adjSpeed) {
+              log(`微调播放速度: ${adjSpeed}x (超前 ${absDiff.toFixed(1)}s)`);
+              lastDriftAdjustedSpeed = adjSpeed;
+              player.playbackRate = adjSpeed;
+            }
+          }
+        } else {
+          if (player.playbackRate !== targetSpeed) {
+            log(`恢复正常播放速度: ${targetSpeed}x (误差 ${absDiff.toFixed(1)}s)`);
+            lastDriftAdjustedSpeed = null;
+            player.playbackRate = targetSpeed;
+          }
+        }
+      }, 1000);
+    }
+
+    function flyDanmaku(text, color = '#fff') {
+      const el = document.createElement('div');
+      el.className = 'danmaku-item';
+      el.textContent = text;
+      el.style.top = `${8 + Math.floor(Math.random() * 62)}%`;
+      el.style.color = color;
+      el.style.animationDuration = `${7 + Math.random() * 3}s`;
+      $('danmakuStage').appendChild(el);
+      setTimeout(() => el.remove(), 10500);
+    }
+
+    function addDanmakuToHistory(item) {
+      const row = document.createElement('div');
+      row.textContent = item.text;
+      $('danmakuHistory').prepend(row);
+      while ($('danmakuHistory').children.length > 30) $('danmakuHistory').lastElementChild.remove();
+    }
+
+    function renderDanmakuHistory(items) {
+      $('danmakuHistory').innerHTML = '';
+      items.slice(-30).reverse().forEach(addDanmakuToHistory);
+    }
+
+    async function refreshVendors() {
+      try {
+        const data = await api('/api/vendors/status');
+        $('biliStatus').textContent = data.bilibili.loggedIn ? 'Bilibili 已登录' : 'Bilibili 未登录，解析公开视频通常也可尝试';
+        alistAccounts = data.alist || [];
+        $('alistAccount').innerHTML = '';
+        for (const item of alistAccounts) {
+          const opt = document.createElement('option');
+          opt.value = item.id;
+          opt.textContent = `${item.username}@${item.host}`;
+          $('alistAccount').appendChild(opt);
+        }
+      } catch (err) {
+        log(`读取账号状态失败：${err.message}`);
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      ['bili', 'alist', 'direct'].forEach(name => $(`tab-${name}`).classList.toggle('hidden', name !== tab));
+    }
+
+    async function renderAlist(path) {
+      const sid = $('alistAccount').value;
+      if (!sid) return alert('请先登录 Alist');
+      $('alistPath').value = path || '/';
+      const data = await api(`/api/vendor/alist/${sid}/list`, { method: 'POST', body: { path: $('alistPath').value } });
+      $('alistList').innerHTML = '';
+      const items = data.items || [];
+      if (!items.length) {
+        $('alistList').innerHTML = '<div class="muted">目录为空</div>';
+        return;
+      }
+      const videoExts = /\.(mp4|mkv|webm|avi|flv|wmv|mov|ts|m3u8|mpd|rmvb|3gp|m4v)$/i;
+      const subExts = /\.(srt|vtt|ass|ssa)$/i;
+      for (const item of items) {
+        if (!item.isDir && !videoExts.test(item.name) && !subExts.test(item.name)) continue;
+
+        const fullPath = joinPath(data.path, item.name);
+        const row = document.createElement('div');
+        row.className = 'resource-item';
+        let typeStr = '视频 · ';
+        if (item.isDir) typeStr = '目录 · ';
+        else if (subExts.test(item.name)) typeStr = '字幕 · ';
+        row.innerHTML = `<strong>${typeStr}${escapeHtml(item.name)}</strong>`;
+        const btn = document.createElement('button');
+        if (item.isDir) {
+          btn.className = 'secondary';
+          btn.textContent = '打开';
+          btn.onclick = async () => {
+            try {
+              await renderAlist(fullPath);
+            } catch (err) {
+              alert(err.message);
+            }
+          };
+        } else if (subExts.test(item.name)) {
+          btn.className = 'secondary';
+          btn.textContent = '加载字幕';
+          btn.onclick = async () => {
+            try {
+              const play = await api(`/api/vendor/alist/${sid}/play?path=${encodeURIComponent(fullPath)}`);
+              shareSubtitle(play.url, item.name);
+            } catch (err) {
+              alert(err.message);
+            }
+          };
+        } else {
+          btn.textContent = '播放';
+          btn.onclick = async () => {
+            try {
+              const play = await api(`/api/vendor/alist/${sid}/play?path=${encodeURIComponent(fullPath)}`);
+              shareRemote(play.url, play.title);
+              // Clear previous subtitles
+              const tracks = player.querySelectorAll('track');
+              tracks.forEach(track => track.remove());
+              $('subUrlInput').value = '';
+              
+              if (play.subtitles && play.subtitles.length > 0) {
+                setTimeout(() => {
+                  if (ws && ws.readyState === WebSocket.OPEN) {
+                    shareSubtitle(play.subtitles[0].url, play.subtitles[0].name);
+                  }
+                }, 500);
+              }
+            } catch (err) {
+              alert(err.message);
+            }
+          };
+        }
+        row.appendChild(btn);
+        $('alistList').appendChild(row);
+      }
+    }
+
+    function joinPath(base, name) {
+      if (!base || base === '/') return `/${name}`;
+      return `${base.replace(/\/$/, '')}/${name}`;
+    }
+
+    function parentPath(path) {
+      path = (path || '/').replace(/\/$/, '');
+      const idx = path.lastIndexOf('/');
+      return idx <= 0 ? '/' : path.slice(0, idx);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => switchTab(btn.dataset.tab));
+
+    $('btnCreate').onclick = async () => {
+      const data = await api('/api/create-room', { method: 'POST' });
+      $('roomInput').value = data.room;
+      connect(data.room);
+    };
+    $('btnJoin').onclick = () => {
+      const room = $('roomInput').value.trim();
+      if (!room) return alert('请输入房间号');
+      connect(room);
+    };
+    $('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoin').click(); });
+    $('sourceType').onchange = () => {
+      const local = $('sourceType').value === 'local';
+      $('urlInput').classList.toggle('hidden', local);
+      $('btnLoadUrl').classList.toggle('hidden', local);
+      $('btnFile').classList.toggle('hidden', !local);
+    };
+    $('btnLoadUrl').onclick = () => shareRemote($('urlInput').value.trim(), '');
+    $('btnDirectPlay').onclick = () => shareRemote($('directUrl').value.trim(), $('directTitle').value.trim());
+    $('btnFile').onclick = () => $('fileInput').click();
+    $('fileInput').onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (localObjectUrl) {
+        URL.revokeObjectURL(localObjectUrl);
+        localObjectUrl = '';
+      }
+      localObjectUrl = URL.createObjectURL(file);
+      player.src = localObjectUrl;
+      player.load();
+      updateVideoEmpty();
+      setSourceMeta({ kind: 'local', title: file.name });
+      resetReady();
+      if (ws && ws.readyState === WebSocket.OPEN) send({ type: 'source', kind: 'local', title: file.name });
+    };
+    $('btnReady').onclick = () => send({ type: 'ready' });
+
+    $('btnBiliQr').onclick = async () => {
+      try {
+        const data = await api('/api/vendor/bilibili/login/qr', { method: 'POST' });
+        $('biliQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.url)}`;
+        $('biliQrBox').classList.remove('hidden');
+        $('biliQrText').textContent = '请使用哔哩哔哩客户端扫码';
+        if (qrTimer) clearInterval(qrTimer);
+        qrTimer = setInterval(async () => {
+          try {
+            const poll = await api(`/api/vendor/bilibili/login/poll?key=${encodeURIComponent(data.key)}`);
+            $('biliQrText').textContent = `状态：${poll.status}`;
+            if (poll.status === 'success' || poll.status === 'expired') {
+              clearInterval(qrTimer);
+              qrTimer = null;
+              await refreshVendors();
+            }
+          } catch (err) {
+            $('biliQrText').textContent = err.message;
+          }
+        }, 1800);
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+    $('btnBiliLogout').onclick = async () => {
+      await api('/api/vendor/bilibili/logout', { method: 'POST' });
+      await refreshVendors();
+    };
+    $('btnBiliParse').onclick = async () => {
+      try {
+        const directPlay = $('biliDirectCheckbox').checked;
+        const selectedQn = parseInt($('biliQuality').value, 10) || 80;
+        const data = await api('/api/vendor/bilibili/parse', { 
+          method: 'POST', 
+          body: { 
+            input: $('biliInput').value.trim(),
+            proxy: !directPlay,
+            qn: selectedQn
+          } 
+        });
+        if (data.sourceKind === 'dash') {
+          const v = data.dash.video?.[0];
+          const a = data.dash.audio?.[0];
+          const res = (v?.width && v?.height) ? `${v.width}x${v.height}` : '未知分辨率';
+          const qnId = v?.id ? `qn=${v.id}` : '';
+          log(`Bilibili DASH：视频 ${res} ${qnId} ${v?.codecs || ''}，音频 ${a?.codecs || '未知'}`);
+        }
+        else log(`Bilibili 播放源：${data.sourceKind || '直链'}`);
+        if (data.debug?.probe) log(`Bilibili 探测：status=${data.debug.probe.status} type=${data.debug.probe.contentType || 'N/A'} range=${data.debug.probe.contentRange || 'N/A'} first=${data.debug.probe.firstBytes || data.debug.probe.error || 'N/A'}`);
+        if (data.debug) log(`Bilibili playurl：format=${data.debug.format || 'N/A'} type=${data.debug.type || 'N/A'} quality=${data.debug.quality || 'N/A'} candidates=${data.debug.candidateCount || 0}`);
+        shareRemote(data.url, data.title);
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    $('btnAlistLogin').onclick = async () => {
+      try {
+        const data = await api('/api/vendor/alist/login', {
+          method: 'POST',
+          body: { host: $('alistHost').value.trim(), username: $('alistUser').value.trim(), password: $('alistPass').value }
+        });
+        await refreshVendors();
+        $('alistAccount').value = data.id;
+        await renderAlist('/');
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+    $('btnAlistRoot').onclick = () => renderAlist('/').catch(err => alert(err.message));
+    $('btnAlistList').onclick = () => renderAlist($('alistPath').value.trim() || '/').catch(err => alert(err.message));
+    $('btnAlistUp').onclick = () => renderAlist(parentPath($('alistPath').value)).catch(err => alert(err.message));
+
+    $('btnDanmaku').onclick = () => {
+      const text = $('danmakuInput').value.trim();
+      if (!text) return;
+      if (!ws || ws.readyState !== WebSocket.OPEN) return alert('请先加入房间');
+      send({ type: 'danmaku', text, color: '#ffffff' });
+      $('danmakuInput').value = '';
+    };
+    $('danmakuInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnDanmaku').click(); });
+
+    player.addEventListener('loadedmetadata', () => { 
+      log(`视频元数据：duration=${player.duration || 'N/A'} video=${player.videoWidth || 0}x${player.videoHeight || 0}`); 
+      updateVideoEmpty(); 
+      updateRoomStats(); 
+      lastTimeUpdateReal = Date.now();
+      lastPlayerTime = player.currentTime;
+    });
+    player.addEventListener('loadeddata', () => log(`视频首帧：readyState=${player.readyState} networkState=${player.networkState}`));
+    player.addEventListener('canplay', () => log(`视频可播放：readyState=${player.readyState} networkState=${player.networkState}`));
+    player.addEventListener('stalled', () => log(`视频 stalled：readyState=${player.readyState} networkState=${player.networkState}`));
+    player.addEventListener('waiting', () => log(`视频 waiting：readyState=${player.readyState} networkState=${player.networkState}`));
+    player.addEventListener('error', () => {
+      const src = player.currentSrc || player.src || '';
+      log(`视频加载失败，code=${player.error?.code || 'N/A'}，message=${player.error?.message || 'N/A'}，readyState=${player.readyState}，networkState=${player.networkState}，src=${src}`);
+      if (src.includes('bilivideo.com') || src.includes('biliapi') || src.includes('upos-sz')) {
+        log(`【提示】B站直链加载失败。由于B站防盗链限制，直链在部分浏览器/网络下无法直接播放。请在右侧关闭“开启直链模式”（改用中转模式）并重新解析播放！`);
+      }
+    });
+    player.addEventListener('timeupdate', () => {
+      lastTimeUpdateReal = Date.now();
+      const seeking = (player._isMocked && player.mpvState) ? player.mpvState.seeking : player.seeking;
+      if (!seeking && !isSyncing && !pendingSeekSync) {
+        lastPlayerTime = player.currentTime;
+      }
+      if (pendingSeekSync) scheduleSeekSyncReady(pendingSeekSync.id);
+    });
+    player.addEventListener('play', () => {
+      lastKnownPlayingState = true;
+      const isProbing = player._isMocked && player.mpvState && player.mpvState.bufferProbing;
+      if (pendingSeekSync && !isProbing) {
+        player.pause();
+        return;
+      }
+      if (isSyncing || pendingSeekSync) return;
+      const speed = roomSpeed;
+      lastSentState = { playing: true, time: player.currentTime, speed, ts: Date.now() };
+      send({ type: 'status', playing: true, time: player.currentTime, speed, reason: 'play' });
+    });
+
+    player.addEventListener('pause', () => {
+      if (isSyncing || pendingSeekSync || isUserSeeking || player.seeking) return;
+      lastKnownPlayingState = false;
+      const speed = roomSpeed;
+      lastSentState = { playing: false, time: player.currentTime, speed, ts: Date.now() };
+      send({ type: 'status', playing: false, time: player.currentTime, speed, reason: 'pause' });
+    });
+
+    player.addEventListener('seeking', () => {
+      const isProbing = player._isMocked && player.mpvState && player.mpvState.bufferProbing;
+      if (pendingSeekSync && !isProbing) {
+        player.pause();
+        return;
+      }
+      if (isSyncing || pendingSeekSync) return;
+      
+      if (player._isMocked) {
+        isUserSeeking = true;
+        wasPlayingBeforeSeek = !player.paused;
+        return;
+      }
+      
+      const now = Date.now();
+      const elapsedWallClock = lastTimeUpdateReal ? (now - lastTimeUpdateReal) / 1000 : 0;
+      const diff = player.currentTime - lastPlayerTime;
+      const expectedProgress = elapsedWallClock * roomSpeed;
+      const delta = diff - expectedProgress;
+      const isPaused = player.paused;
+      const isRealSeek = isPaused ? (Math.abs(diff) > 0.1) : ((diff < -1.0) || (delta > 2.0));
+      
+      if (!isRealSeek) {
+        console.log(`忽略 App 端误报的虚假 Seek (diff: ${diff.toFixed(2)}s, delta: ${delta.toFixed(2)}s)`);
+        return;
+      }
+      
+      if (!isUserSeeking) {
+        wasPlayingBeforeSeek = lastKnownPlayingState;
+      }
+      isUserSeeking = true;
+      if (!isPaused) {
+        const oldSyncing = isSyncing;
+        isSyncing = true;
+        player.pause();
+        isSyncing = oldSyncing;
+      }
+    });
+
+    player.addEventListener('seeked', () => {
+      const isProbing = player._isMocked && player.mpvState && player.mpvState.bufferProbing;
+      if (isSyncing || pendingSeekSync) {
+        isUserSeeking = false;
+        if (pendingSeekSync && !isProbing && player.paused === false) {
+          player.pause();
+        }
+        if (isSyncing && !player._isMocked) {
+          completePendingProgrammaticSeek('seeked');
+        }
+        return;
+      }
+      
+      if (!isUserSeeking) {
+        return;
+      }
+      
+      isUserSeeking = false;
+      const time = player.currentTime;
+      const speed = roomSpeed;
+      startSeekSync(time, wasPlayingBeforeSeek, speed);
+    });
+
+    function updateSpeedButtonText(speed) {
+      $('btnSpeed').textContent = `${speed.toFixed(2).replace(/\.00$/, '')}X`;
+    }
+
+    function shareSubtitle(url, title) {
+      if (!url) return alert('请输入字幕链接');
+      if (!ws || ws.readyState !== WebSocket.OPEN) return alert('请先加入房间');
+      send({ type: 'subtitle', url, title: title || url.split('/').pop() || url });
+      loadSubtitle(url, title);
+    }
+
+    function loadSubtitle(url, title) {
+      const u = String(url || '').trim();
+      if (!u) return;
+      
+      $('subUrlInput').value = u;
+      
+      const tracks = player.querySelectorAll('track');
+      tracks.forEach(track => track.remove());
+
+      const track = document.createElement('track');
+      track.kind = 'subtitles';
+      track.label = title || '外部字幕';
+      track.srclang = 'zh';
+      track.src = u;
+      track.default = true;
+      player.appendChild(track);
+      if (track.track) {
+        track.track.mode = 'showing';
+      }
+      
+      let metaText = $('sourceMeta').textContent;
+      if (metaText && metaText !== '播放源未设置') {
+        const idx = metaText.indexOf(' (字幕:');
+        if (idx !== -1) {
+          metaText = metaText.slice(0, idx);
+        }
+        $('sourceMeta').textContent = `${metaText} (字幕: ${title || u})`;
+      }
+      
+      if (window.AndroidBridge && typeof AndroidBridge.onSubtitleLoaded === 'function') {
+        AndroidBridge.onSubtitleLoaded(u, title || '');
+      }
+      log(`已加载字幕：${title || u}`);
+    }
+
+    $('btnSpeed').onclick = () => {
+      const rates = [1.0, 1.25, 1.5, 1.75, 2.0, 0.5];
+      let idx = rates.indexOf(roomSpeed);
+      if (idx === -1) {
+        let minDiff = Infinity;
+        idx = 0;
+        for (let i = 0; i < rates.length; i++) {
+          const diff = Math.abs(rates[i] - roomSpeed);
+          if (diff < minDiff) {
+            minDiff = diff;
+            idx = i;
+          }
+        }
+      }
+      const nextRate = rates[(idx + 1) % rates.length];
+      roomSpeed = nextRate;
+      player.playbackRate = nextRate;
+      updateSpeedButtonText(nextRate);
+      sendState(!player.paused, player.currentTime, 'speed');
+    };
+
+    player.addEventListener('ratechange', () => {
+      if (isSyncing) return;
+      const speed = player.playbackRate;
+      if (speed === roomSpeed || speed === lastDriftAdjustedSpeed) return;
+      
+      log(`播放速度变更：${speed}x`);
+      roomSpeed = speed;
+      updateSpeedButtonText(speed);
+      sendState(!player.paused, player.currentTime, 'ratechange');
+    });
+
+    $('btnLoadSub').onclick = () => {
+      const url = $('subUrlInput').value.trim();
+      if (!url) return alert('请输入字幕链接');
+      shareSubtitle(url, url.split('/').pop());
+    };
+
+    $('subUrlInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnLoadSub').click(); });
+
+    async function init() {
+      // Setup room auto-connect
+      if ($('roomInput').value) {
+        connect($('roomInput').value);
+      }
+      
+      await refreshVendors();
+      updateRoomStats();
+      updateVideoEmpty();
+      
+      // Auto list alist directory if logged in
+      if ($('alistAccount').value && $('alistPath').value) {
+        renderAlist($('alistPath').value).catch(err => {
+          console.warn('Auto render alist path failed:', err);
+        });
+      }
+    }
+    
+    init();
+  </script>
+</body>
+
+</html>
