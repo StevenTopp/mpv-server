@@ -1420,6 +1420,7 @@
           seekReadyTimerSeekId = null;
         }
         pendingSeekSync = null;
+        isUserSeeking = false;
         setSyncOverlay(false);
         if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
           window.AndroidBridge.setActiveSeekId("");
@@ -1590,6 +1591,7 @@
       if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
         window.AndroidBridge.setActiveSeekId(seekId);
       }
+      isUserSeeking = false;
       if (player._isMocked && player.mpvState) {
         player.mpvState.seeking = true;
         if (msg.from !== myUserId) {
@@ -1773,6 +1775,7 @@
 
     function finishSeekPlayback(shouldPlay, targetTime, targetSpeed, reason) {
       isSyncing = true;
+      isUserSeeking = false;
       lastKnownPlayingState = shouldPlay;
       player.playbackRate = targetSpeed;
       player.pause();
