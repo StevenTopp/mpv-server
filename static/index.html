@@ -1625,7 +1625,8 @@
       setSyncOverlay(true, `Waiting for clients (${msg.readyCount || 0}/${msg.count || userCount || 1})`);
 
       const timeDiff = Math.abs(player.currentTime - targetTime);
-      const needForceCurrentTime = player._isMocked && player.mpvState && (msg.from !== myUserId || timeDiff > 0.5);
+      const isClientEnv = window.AndroidBridge || (player._isMocked && player.mpvState);
+      const needForceCurrentTime = isClientEnv && (msg.from !== myUserId || timeDiff > 0.5);
 
       if (msg.from !== myUserId || needForceCurrentTime) {
         isSyncing = true;
