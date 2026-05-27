@@ -21,6 +21,23 @@ def is_alist_auth_error(data: dict) -> bool:
             return True
     return False
 
+def safe_url_host(url: str) -> str:
+    try:
+        return urllib.parse.urlparse(url).netloc.lower()
+    except Exception:
+        return ""
+
+def is_baidu_pcs_url(url: str) -> bool:
+    host = safe_url_host(url)
+    return "baidupcs.com" in host or "pcs.baidu.com" in host
+
+def baidu_pcs_headers() -> dict[str, str]:
+    return {
+        "User-Agent": "pan.baidu.com",
+        "Accept-Encoding": "identity",
+        "Connection": "close",
+    }
+
 class AlistLoginReq(BaseModel):
     host: str
     username: str = ""
@@ -305,7 +322,16 @@ async def alist_play(server_id: str, path: str):
             
     # Requirement: "alist视频播放不需要经过服务器"
     # Return the raw sign URL directly so that the client plays it directly from Alist CDN.
-    return {"title": Path(path).name, "url": raw, "rawUrl": raw, "subtitles": subtitles}
+    is_baidu_pcs = is_baidu_pcs_url(raw)
+    return {
+        "title": Path(path).name,
+        "url": raw,
+        "rawUrl": raw,
+        "subtitles": subtitles,
+        "rawHost": safe_url_host(raw),
+        "isBaiduPcs": is_baidu_pcs,
+        "headerProfile": "baidu-pcs" if is_baidu_pcs else "default",
+    }
 
 @router.delete("/api/vendor/alist/{server_id}")
 async def alist_delete(server_id: str):
@@ -317,6 +343,56 @@ async def alist_delete(server_id: str):
 @router.get("/api/proxy/alist")
 async def alist_proxy(url: str, request: Request):
     return await proxy_stream(url, {"User-Agent": BILI_USER_AGENT}, request)
+
+@router.get("/api/debug/probe-media")
+async def probe_media(url: str):
+    if not url:
+        raise HTTPException(status_code=400, detail="Missing url parameter")
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise HTTPException(status_code=400, detail="Invalid media url")
+
+    is_baidu_pcs = is_baidu_pcs_url(url)
+    headers = baidu_pcs_headers() if is_baidu_pcs else {
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Encoding": "identity",
+        "Connection": "close",
+    }
+    headers["Range"] = "bytes=0-1023"
+    header_profile = "baidu-pcs" if is_baidu_pcs else "default"
+
+    try:
+        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+            resp = await client.get(url, headers=headers)
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message": f"Probe upstream failed: {exc.__class__.__name__}",
+                "host": parsed.netloc.lower(),
+                "request_header_profile": header_profile,
+            },
+        ) from exc
+
+    final_host = safe_url_host(str(resp.url))
+    logger.info(
+        "media probe host=%s final_host=%s status=%s profile=%s content_range=%s",
+        parsed.netloc.lower(),
+        final_host,
+        resp.status_code,
+        header_profile,
+        resp.headers.get("content-range", ""),
+    )
+    return {
+        "status_code": resp.status_code,
+        "content_type": resp.headers.get("content-type"),
+        "content_length": resp.headers.get("content-length"),
+        "content_range": resp.headers.get("content-range"),
+        "accept_ranges": resp.headers.get("accept-ranges"),
+        "final_host": final_host,
+        "request_header_profile": header_profile,
+        "is_baidu_pcs": is_baidu_pcs,
+    }
 
 def srt_to_vtt(srt_content: str) -> str:
     import re

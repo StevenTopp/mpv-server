@@ -5,32 +5,44 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <title>SyncTV Mine - 极简高清同步影院</title>
-  <!-- Load Premium Fonts -->
+  <title>一起看电视吖</title>
+  <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+  <script>
+    // Immediate Theme Detection to prevent flash of unstyled content
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      if (savedTheme === 'light') {
+        document.documentElement.classList.add('light-mode');
+      }
+    })();
+  </script>
+  <!-- Load Premium Fonts (non-render-blocking) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- media=print trick: loads async, swaps to 'all' on load, so it never blocks rendering -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
   
   <style>
     :root {
-      --bg: #080b12;
-      --bg-gradient: radial-gradient(circle at 50% 0%, #101526 0%, #080b12 75%);
-      --surface: rgba(16, 21, 34, 0.68);
+      --bg: #090b0f;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #1e1e1e 0%, #090b0f 75%);
+      --surface: rgba(18, 23, 29, 0.72);
       --surface-border: rgba(255, 255, 255, 0.07);
       --surface-hover: rgba(255, 255, 255, 0.03);
-      --surface-active: rgba(16, 21, 34, 0.92);
-      --accent: linear-gradient(135deg, #6d28d9 0%, #3730a3 100%);
-      --accent-glow: rgba(109, 40, 217, 0.3);
-      --accent-solid: #6d28d9;
-      --accent-hover: #7c3aed;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --text-glow: rgba(243, 244, 246, 0.1);
+      --surface-active: rgba(18, 23, 29, 0.94);
+      --accent: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+      --accent-glow: rgba(255, 255, 255, 0.02);
+      --accent-solid: rgba(255, 255, 255, 0.08);
+      --accent-hover: rgba(255, 255, 255, 0.15);
+      --text: #edf2f5;
+      --text-muted: #9daab3;
+      --text-glow: rgba(237, 242, 245, 0.1);
       --danger: #ef4444;
       --ok: #10b981;
       --warn: #f59e0b;
       --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-      --glow: 0 0 18px rgba(109, 40, 217, 0.16);
+      --glow: none;
     }
 
     * {
@@ -85,7 +97,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.16);
+      box-shadow: 0 4px 12px rgba(117, 130, 195, 0.15);
     }
 
     button:hover {
@@ -143,8 +155,31 @@
     input:focus,
     select:focus {
       border-color: var(--accent-solid);
-      box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.16);
+      box-shadow: 0 0 0 3px rgba(117, 130, 195, 0.15);
       background: rgba(0, 0, 0, 0.35);
+    }
+
+    #subUrlInput {
+      min-width: 0;
+      text-overflow: ellipsis;
+    }
+
+    video::cue {
+      font-size: 100%; /* Restored font size to 1.0x */
+      background: rgba(0, 0, 0, 0.2); /* Very light translucent background to avoid blocking the video */
+      color: #ffffff;
+      text-shadow: 
+        -1.5px -1.5px 0 #000,  
+         1.5px -1.5px 0 #000,
+        -1.5px  1.5px 0 #000,
+         1.5px  1.5px 0 #000,
+         0px 2px 4px rgba(0, 0, 0, 0.85); /* 1.5px crisp black outline + drop shadow */
+    }
+
+    /* Target the actual shadow-DOM container inside Chrome/Blink for positioning and layout */
+    video::-webkit-media-text-track-container {
+      line-height: 1.02 !important; /* Extremely tight line spacing to align top and bottom lines comfortably */
+      transform: translateY(14.6px) !important; /* Moves the entire subtitle track to settle at 14.6px lower than default baseline */
     }
 
     .app {
@@ -167,7 +202,7 @@
       font-weight: 800;
       font-size: 28px;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #6d28d9 0%, #3730a3 100%);
+      background: linear-gradient(135deg, #95a2dc 0%, #8070bd 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -237,10 +272,13 @@
     }
 
     video {
-      display: block;
+      position: absolute;
+      inset: 0;
       width: 100%;
-      max-height: 75vh;
+      height: 100%;
+      max-height: none;
       background: #000;
+      object-fit: contain;
     }
 
     .empty {
@@ -308,19 +346,13 @@
 
     .danmaku-item {
       position: absolute;
-      left: 100%;
+      left: 0;
       min-width: max-content;
       font-weight: 700;
       font-size: 24px;
       letter-spacing: 0.5px;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.6);
-      animation: fly linear forwards;
-    }
-
-    @keyframes fly {
-      to {
-        transform: translateX(calc(-100vw - 100%));
-      }
+      will-change: transform;
     }
 
     .control-strip {
@@ -451,7 +483,7 @@
     .tabs button.active {
       color: #fff;
       background: var(--accent);
-      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.16);
+      box-shadow: 0 4px 12px rgba(117, 130, 195, 0.15);
     }
 
     .muted {
@@ -625,6 +657,7 @@
       .video-frame {
         min-height: 260px;
       }
+
     }
 
     /* Floating Theme Toggle Button */
@@ -659,21 +692,21 @@
 
     /* Day Mode (Light Mode) Color Overrides */
     :root.light-mode {
-      --bg: #f4fbfb;
-      --bg-gradient: radial-gradient(circle at 50% 0%, #e0f2f1 0%, #f4fbfb 75%); /* Soft pale mint/teal off-white gradient background */
+      --bg: #f8fafc;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #e2e8f0 0%, #f8fafc 75%); /* Soft pale grey off-white gradient background */
       --surface: rgba(255, 255, 255, 0.8);
       --surface-border: rgba(0, 0, 0, 0.06);
       --surface-hover: rgba(0, 0, 0, 0.02);
       --surface-active: rgba(255, 255, 255, 0.95);
-      --accent: linear-gradient(135deg, #009e8e 0%, #007064 100%); /* Gorgeous emerald-teal (#008075) brand gradient */
-      --accent-glow: rgba(0, 128, 117, 0.25);
-      --accent-solid: #008075; /* Exact emerald-teal from image */
-      --accent-hover: #00a896; /* Light emerald teal */
+      --accent: linear-gradient(135deg, #ffffff 0%, #ffffff 100%); /* Clean white background button */
+      --accent-glow: rgba(255, 255, 255, 0.2);
+      --accent-solid: #ffffff;
+      --accent-hover: #f4f4f5;
       --text: #1f2937; /* Clean charcoal text */
-      --text-muted: #526361; /* Soft slate-teal gray for captions */
+      --text-muted: #64748b; /* Soft slate grey for captions */
       --text-glow: rgba(31, 41, 55, 0.04);
-      --shadow: 0 20px 40px -15px rgba(0, 128, 117, 0.06), 0 0 15px rgba(0, 0, 0, 0.02);
-      --glow: 0 0 20px rgba(0, 128, 117, 0.15);
+      --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.02);
+      --glow: 0 0 20px rgba(0, 0, 0, 0.05);
     }
 
     /* Light Mode Component Overrides */
@@ -690,17 +723,21 @@
     :root.light-mode select:focus {
       background: #fff;
       border-color: var(--accent-solid);
-      box-shadow: 0 0 0 3px rgba(0, 128, 117, 0.15);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
     }
     :root.light-mode button {
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 128, 117, 0.2);
+      color: #1f2937;
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     :root.light-mode button:hover {
-      box-shadow: 0 6px 20px rgba(0, 128, 117, 0.35);
+      background: var(--accent-hover);
+      color: #000000;
+      border-color: rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
     }
     :root.light-mode button.secondary {
-      color: #273b38;
+      color: #1f2937;
       background: rgba(0, 0, 0, 0.04);
       border-color: rgba(0, 0, 0, 0.08);
       box-shadow: none;
@@ -721,9 +758,10 @@
       background: rgba(0, 0, 0, 0.02);
     }
     :root.light-mode .tabs button.active {
-      color: #fff;
+      color: #1f2937;
       background: var(--accent);
-      box-shadow: 0 4px 12px rgba(0, 128, 117, 0.25);
+      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     :root.light-mode .pill {
       background: rgba(0, 0, 0, 0.03);
@@ -799,8 +837,8 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <h1>SyncTV Mine</h1>
-        <p>轻量级高清影音同步系统 · 极客纯净版</p>
+        <h1>一起看电视吖</h1>
+        <p>Cozy up for a movie.</p>
       </div>
       <div class="room-console">
         <input id="roomInput" value="aaaa" placeholder="请输入房间号 (如 a1b2c3)" maxlength="24">
@@ -811,26 +849,9 @@
 
     <main class="layout">
       <section class="theater">
-        <div class="source-dock">
-          <div class="source-row">
-            <select id="sourceType">
-              <option value="remote">视频直链</option>
-              <option value="local">本地文件</option>
-            </select>
-            <input id="urlInput" placeholder="粘贴 mp4 / m3u8 / webm / mpd 视频链接">
-            <button id="btnLoadUrl">广播共享</button>
-            <button id="btnFile" class="secondary hidden">选择本地视频</button>
-            <input type="file" id="fileInput" accept="video/*,.mkv,.avi,.rmvb,.flv,.wmv">
-          </div>
-          <div id="subRow" class="source-row" style="margin-top: 10px; grid-template-columns: 130px minmax(0, 1fr) auto;">
-            <span style="font-size: 14px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-muted);">外部字幕链接</span>
-            <input id="subUrlInput" placeholder="粘贴 .srt / .vtt / .ass / .ssa 字幕直链 (可选)">
-            <button id="btnLoadSub" class="secondary">加载字幕</button>
-          </div>
-          <span id="sourceMeta" class="muted">播放源未设置</span>
-        </div>
+        <span id="sourceMeta" class="hidden">播放源未设置</span>
         <div class="video-frame">
-          <video id="player" controls playsinline></video>
+          <video id="player" playsinline></video>
           <div id="danmakuStage" class="danmaku-stage"></div>
           <div id="syncOverlay" class="sync-overlay hidden">
             <div>
@@ -873,50 +894,14 @@
         <section class="panel">
           <h2>资源账号与解析</h2>
           <div class="tabs">
-            <button class="tab active" data-tab="bili">Bilibili</button>
-            <button class="tab" data-tab="alist">Alist</button>
+            <button class="tab active" data-tab="alist">Alist</button>
             <button class="tab" data-tab="direct">直链</button>
-          </div>
-
-          <!-- Bilibili Section -->
-          <div id="tab-bili" class="stack">
-            <div class="grid2">
-              <button id="btnBiliQr">扫码登录</button>
-              <button id="btnBiliLogout" class="secondary">退出登录</button>
-            </div>
-            <div id="biliQrBox" class="stack hidden">
-              <img id="biliQrImg" alt="Bilibili 登录二维码">
-              <span id="biliQrText" class="muted">正在生成二维码...</span>
-            </div>
-            <div class="grid2">
-              <input id="biliInput" placeholder="输入 BV 号或 B站视频链接">
-              <button id="btnBiliParse">解析并共享</button>
-            </div>
-            <div class="toggle-container" style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <label class="switch">
-                  <input type="checkbox" id="biliDirectCheckbox">
-                  <span class="slider"></span>
-                </label>
-                <span class="toggle-label">开启直链模式 (省服务器带宽)</span>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
-              <span class="toggle-label">分辨率清晰度</span>
-              <select id="biliQuality" style="width: 180px; height: 36px; border-radius: 8px;">
-                <option value="120">4K 超清 (大会员)</option>
-                <option value="116">1080P 60帧 (大会员)</option>
-                <option value="80" selected>1080P 高清 (已登录)</option>
-                <option value="64">720P 高清</option>
-                <option value="32">480P 清晰</option>
-                <option value="16">360P 流畅</option>
-              </select>
-            </div>
-            <span id="biliStatus" class="muted">状态读取中</span>
+            <button class="tab" data-tab="local">本地</button>
+            <button class="tab" data-tab="bili">B站</button>
           </div>
 
           <!-- Alist Section -->
-          <div id="tab-alist" class="stack hidden">
+          <div id="tab-alist" class="stack">
             <input id="alistHost" placeholder="Alist 根地址 (如 https://alist.example.com)">
             <div class="grid2">
               <input id="alistUser" placeholder="用户名">
@@ -937,9 +922,85 @@
 
           <!-- Direct Input Section -->
           <div id="tab-direct" class="stack hidden">
-            <input id="directUrl" placeholder="输入视频直链 URL (mp4, m3u8, mpd 等)">
+            <input id="directUrl" placeholder="输入视频直链 URL 或 B站分享链接">
             <input id="directTitle" placeholder="视频标题 (可选)">
-            <button id="btnDirectPlay">共享该直链</button>
+            <button id="btnDirectPlay" class="primary" style="width: 100%; height: 40px; border-radius: 8px;">共享播放</button>
+          </div>
+
+          <!-- Local File Section -->
+          <div id="tab-local" class="stack hidden">
+            <button id="btnFile" class="secondary" style="width: 100%; height: 40px; border-radius: 8px;">选择本地视频文件</button>
+            <input type="file" id="fileInput" accept="video/*,.mkv,.avi,.rmvb,.flv,.wmv" style="display: none;">
+            <span id="localFileName" class="muted" style="text-align: center; display: block; word-break: break-all; margin-top: 8px;">未选择文件</span>
+          </div>
+
+          <!-- Bilibili Section -->
+          <div id="tab-bili" class="stack hidden">
+            <div class="grid2">
+              <button id="btnBiliQr">扫码登录</button>
+              <button id="btnBiliLogout" class="secondary">退出登录</button>
+            </div>
+            <div id="biliQrBox" class="stack hidden">
+              <img id="biliQrImg" alt="Bilibili 登录二维码">
+              <span id="biliQrText" class="muted">正在生成二维码...</span>
+            </div>
+            <div class="grid2">
+              <input id="biliInput" placeholder="输入 BV 号或 B站视频链接">
+              <button id="btnBiliParse">解析并共享</button>
+            </div>
+            <div class="toggle-container" style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <label class="switch">
+                  <input type="checkbox" id="biliDirectCheckbox" checked>
+                  <span class="slider"></span>
+                </label>
+                <span class="toggle-label">开启直链模式 (省服务器带宽)</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;">
+              <span class="toggle-label">分辨率清晰度</span>
+              <select id="biliQuality" style="width: 180px; height: 36px; border-radius: 8px;">
+                <option value="120">4K 超清 (大会员)</option>
+                <option value="116">1080P 60帧 (大会员)</option>
+                <option value="80" selected>1080P 高清 (已登录)</option>
+                <option value="64">720P 高清</option>
+                <option value="32">480P 清晰</option>
+                <option value="16">360P 流畅</option>
+              </select>
+            </div>
+            <span id="biliStatus" class="muted">状态读取中</span>
+          </div>
+        </section>
+
+        <!-- Download Management Panel -->
+        <section class="panel">
+          <h2>下载管理</h2>
+          <div class="stack" style="gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input id="downloadPathInput" readonly placeholder="未设置保存路径 (点击选择)" style="flex-grow: 1; font-size: 13px; height: 36px; border-radius: 8px;">
+              <button id="btnSelectPath" class="secondary" style="white-space: nowrap; height: 36px; padding: 0 12px; font-size: 13px; border-radius: 8px;">选择路径</button>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+              <span class="toggle-label">开启下载模式 (替换播放/字幕按钮)</span>
+              <label class="switch" style="scale: 0.85; margin: 0;">
+                <input type="checkbox" id="downloadSwitch">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Subtitle Panel -->
+        <section class="panel">
+          <h2>外部字幕链接</h2>
+          <div class="stack">
+            <div class="grid3" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px;">
+              <input id="subUrlInput" placeholder="输入 .srt / .vtt / .ass / .ssa 字幕链接">
+              <button id="btnLoadSub" class="primary">加载</button>
+              <button id="btnLocalSub" class="secondary">导入本地</button>
+            </div>
+            <input type="file" id="subFileInput" accept=".srt,.vtt,.ass,.ssa" style="display: none;">
+            <span id="subtitleMeta" class="muted" style="text-align: center; display: block; margin-top: 4px;">当前无外部字幕</span>
           </div>
         </section>
 
@@ -962,37 +1023,53 @@
     </main>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
+  <script src="/hls.min.js" defer></script>
+  <script src="/dash.all.min.js" defer></script>
   <script>
-    // Day Mode (Light Mode) Injector and Toggle Handler
+    // Day Mode (Light Mode) Toggle Button Handler
     (function() {
       const toggle = document.createElement('button');
       toggle.id = 'themeToggle';
       toggle.className = 'theme-toggle-btn';
-      toggle.innerHTML = '🌙';
+      toggle.innerHTML = document.documentElement.classList.contains('light-mode') ? '☀️' : '🌙';
       toggle.title = '切换日夜模式';
       document.body.appendChild(toggle);
-      
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      if (savedTheme === 'light') {
-        document.documentElement.classList.add('light-mode');
-        toggle.innerHTML = '☀️';
-      }
       
       toggle.addEventListener('click', () => {
         const isLight = document.documentElement.classList.toggle('light-mode');
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
         toggle.innerHTML = isLight ? '☀️' : '🌙';
+        if (window.AndroidBridge && window.AndroidBridge.onThemeToggle) {
+          try {
+            window.AndroidBridge.onThemeToggle(isLight);
+          } catch(e) {
+            console.log("Failed to notify theme change via AndroidBridge:", e);
+          }
+        }
       });
     })();
 
     const $ = id => document.getElementById(id);
+    function assign(target) {
+      for (var i = 1; i < arguments.length; i++) {
+        var source = arguments[i];
+        if (source) {
+          for (var key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+      }
+      return target;
+    }
     const player = $('player');
     let ws = null;
     let roomID = '';
     let myUserId = '';
     let userCount = 0;
+    let roomMemberCount = 0;
+    let onlineUsers = new Set();
     let readyUsers = new Set();
     let hls = null;
     let dashPlayer = null;
@@ -1014,6 +1091,10 @@
     let pendingSeekSync = null;
     let seekReadyTimer = null;
     let seekReadyTimerSeekId = null;
+    let reconnectTimer = null;
+    let closingForLeave = false;
+    let stickyClientEnabled = false;
+    const CLIENT_ID_KEY = 'synctv_mine_client_id';
     const DRIFT_SOFT_THRESHOLD = 0.75;
     const DRIFT_HARD_THRESHOLD = 3.5;
     const DRIFT_SPEED_DELTA = 0.1;
@@ -1025,6 +1106,80 @@
       const d = document.createElement('div');
       d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
       $('log').prepend(d);
+      sendClientDebugLog('info', msg);
+    }
+
+    function sanitizeClientLog(msg) {
+      return String(msg || '')
+        .replace(/https?:\/\/[^\s，。]+/g, match => {
+          try {
+            const u = new URL(match);
+            return `${u.protocol}//${u.host}${u.pathname ? '/...' : ''}`;
+          } catch {
+            return '[url]';
+          }
+        })
+        .slice(0, 800);
+    }
+
+    function sendClientDebugLog(level, msg) {
+      if (!/iPad|iPhone|iPod/.test(navigator.userAgent) &&
+          !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+        return;
+      }
+      const body = JSON.stringify({ level, message: sanitizeClientLog(msg) });
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/debug/client-log', new Blob([body], { type: 'application/json' }));
+          return;
+        }
+      } catch {
+        // Fall back to fetch below.
+      }
+      fetch('/api/debug/client-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function safeHost(url) {
+      try {
+        return new URL(url, location.href).host;
+      } catch {
+        return 'unknown';
+      }
+    }
+
+    function isLikelyBaiduPcsHost(host) {
+      const h = String(host || '').toLowerCase();
+      return h.includes('baidupcs.com') || h.includes('pcs.baidu.com');
+    }
+
+    function persistentClientEnabled() {
+      return stickyClientEnabled;
+    }
+
+    function getClientId() {
+      try {
+        let id = localStorage.getItem(CLIENT_ID_KEY);
+        if (!id) {
+          const uuid = window.crypto && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          id = `web-${uuid}`;
+          localStorage.setItem(CLIENT_ID_KEY, id);
+        }
+        return id;
+      } catch {
+        return `web-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
     }
 
     function seekField(value) {
@@ -1034,17 +1189,22 @@
       return String(value);
     }
 
-    function seekSyncLog(event, fields = {}) {
-      const text = `[${event}] ` + Object.entries(fields)
-        .map(([key, value]) => `${key}=${seekField(value)}`)
-        .join(' ');
+    function seekSyncLog(event, fields) {
+      var f = fields || {};
+      var keys = Object.keys(f);
+      var parts = [];
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        parts.push(key + '=' + seekField(f[key]));
+      }
+      const text = `[${event}] ` + parts.join(' ');
       log(text);
       console.log(`SyncTV ${text}`);
     }
 
     async function api(url, options = {}) {
-      const opts = { ...options };
-      opts.headers = { ...(opts.headers || {}) };
+      const opts = assign({}, options);
+      opts.headers = assign({}, opts.headers || {});
       if (opts.body && typeof opts.body !== 'string') {
         opts.headers['Content-Type'] = 'application/json';
         opts.body = JSON.stringify(opts.body);
@@ -1059,7 +1219,7 @@
 
     function send(obj) {
       if (ws && ws.readyState === WebSocket.OPEN) {
-        const payload = { clientTs: Date.now() / 1000, ...obj };
+        const payload = assign({ clientTs: Date.now() / 1000 }, obj);
         ws.send(JSON.stringify(payload));
       }
       else log('WebSocket 未连接');
@@ -1080,12 +1240,22 @@
     }
 
     function updateVideoEmpty() {
-      $('videoEmpty').style.display = player.currentSrc ? 'none' : 'grid';
+      const hasSource = Boolean(player.dataset.hasSource === '1' || player.currentSrc || player.src || player.querySelector('source'));
+      $('videoEmpty').style.display = hasSource ? 'none' : 'grid';
+      player.controls = hasSource;
     }
 
     function updateRoomStats() {
-      $('userCount').textContent = `${userCount} 人在线`;
-      $('readyStatus').textContent = `${readyUsers.size} 人就绪`;
+      let readyOnlineCount = 0;
+      readyUsers.forEach(function(id) {
+        if (onlineUsers.has(id)) readyOnlineCount++;
+      });
+      $('userCount').textContent = roomMemberCount > userCount
+        ? `${userCount} 人在线 / ${roomMemberCount} 人在房`
+        : `${userCount} 人在线`;
+      $('readyStatus').textContent = roomMemberCount > userCount
+        ? `${readyOnlineCount} 人在线就绪 / ${readyUsers.size} 人在房就绪`
+        : `${readyUsers.size} 人就绪`;
       $('btnReady').disabled = !player.currentSrc || readyUsers.has(myUserId) || !ws || ws.readyState !== WebSocket.OPEN;
       $('btnReady').textContent = readyUsers.has(myUserId) ? '已就绪' : '我已加载';
     }
@@ -1107,18 +1277,19 @@
     }
 
     function setSourceMeta(source) {
-      const kind = source?.kind || 'none';
-      const title = source?.title || source?.url || '';
+      const kind = (source && source.kind) || 'none';
+      const title = (source && source.title) || (source && source.url) || '';
       let text = kind === 'none' ? '播放源未设置' : `${kind === 'local' ? '本地' : '远程'} · ${title}`;
-      if (source?.subtitle) {
+      if (source && source.subtitle) {
         text += ` (字幕: ${source.subtitleTitle || source.subtitle})`;
       }
       $('sourceMeta').textContent = text;
     }
 
     function loadRemoteSource(source) {
-      const url = String(source?.url || '').trim();
+      const url = String((source && source.url) || '').trim();
       if (!url) return;
+      const isBiliDirectUrl = /bilivideo\.com|biliapi|upos-/i.test(url);
       
       // Clear subtitle track and input when a new video source is loaded
       const tracks = player.querySelectorAll('track');
@@ -1139,10 +1310,20 @@
       }
       player.pause();
       player.removeAttribute('src');
+      delete player.dataset.hasSource;
+      if (isBiliDirectUrl) {
+        player.referrerPolicy = 'no-referrer';
+        player.setAttribute('referrerpolicy', 'no-referrer');
+      } else {
+        player.removeAttribute('referrerpolicy');
+        player.referrerPolicy = '';
+      }
       player.load();
 
       let managedByDash = false;
-      if (/\.m3u8(\?|#|$)/i.test(url)) {
+      if (player._isMocked) {
+        player.src = url;
+      } else if (/\.m3u8(\?|#|$)/i.test(url)) {
         if (player.canPlayType('application/vnd.apple.mpegurl')) {
           player.src = url;
         } else if (window.Hls && Hls.isSupported()) {
@@ -1179,8 +1360,14 @@
       } else {
         player.src = url.startsWith('/api/proxy/') ? `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}` : url;
       }
+      player.dataset.hasSource = '1';
       if (!managedByDash && !player._isMocked) player.load();
       updateVideoEmpty();
+      const host = safeHost(url);
+      log(`加载视频：host=${host} isIOS=${isIOS()} proxy=${url.includes('/api/proxy/')}`);
+      if (isIOS() && isLikelyBaiduPcsHost(host) && !url.includes('/api/proxy/')) {
+        log('iOS Safari 无法由网页直接添加百度网盘请求头，请确认本机代理已对该 host 设置 User-Agent: pan.baidu.com 并删除 Referer。');
+      }
       log(`加载播放源：${source.title || url}`);
     }
 
@@ -1190,21 +1377,42 @@
       send({ type: 'source', kind: 'remote', url, title: title || url.split('/').pop() || url });
     }
 
-    function connect(room) {
-      if (ws) ws.close();
+    function scheduleReconnect() {
+      if (!persistentClientEnabled() || !roomID || closingForLeave || reconnectTimer) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        if (!ws || ws.readyState === WebSocket.CLOSED) {
+          log('正在重新连接房间...');
+          connect(roomID, { reconnect: true });
+        }
+      }, 1500);
+    }
+
+    function connect(room, options = {}) {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+      closingForLeave = false;
       roomID = room;
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${proto}//${location.host}/ws?room=${encodeURIComponent(roomID)}`);
+      ws = new WebSocket(`${proto}//${location.host}/ws?room=${encodeURIComponent(roomID)}&client_id=${encodeURIComponent(getClientId())}`);
       ws.onopen = () => {
         setConnected(true);
         $('roomLabel').textContent = `房间 ${roomID}`;
-        log(`已进入房间 ${roomID}`);
+        log(options.reconnect ? `已重新连接房间 ${roomID}` : `已进入房间 ${roomID}`);
         startDriftCheck();
         updateRoomStats();
       };
       ws.onclose = () => {
         setConnected(false);
-        log('房间连接断开');
+        log(closingForLeave
+          ? '已退出房间'
+          : (persistentClientEnabled() ? '房间连接断开，保留房间席位并等待重连' : '房间连接断开'));
         if (syncCheckTimer) clearInterval(syncCheckTimer);
         if (seekReadyTimer) {
           clearInterval(seekReadyTimer);
@@ -1217,6 +1425,7 @@
           window.AndroidBridge.setActiveSeekId("");
         }
         updateRoomStats();
+        if (!closingForLeave && persistentClientEnabled()) scheduleReconnect();
       };
       ws.onmessage = e => {
         let msg;
@@ -1226,7 +1435,11 @@
     }
 
     function handleMessage(msg) {
+      if (typeof msg.stickyMember === 'boolean') stickyClientEnabled = msg.stickyMember;
       if (typeof msg.count === 'number') userCount = msg.count;
+      if (typeof msg.onlineCount === 'number') userCount = msg.onlineCount;
+      roomMemberCount = typeof msg.memberCount === 'number' ? msg.memberCount : userCount;
+      onlineUsers = Array.isArray(msg.onlineUsers) ? new Set(msg.onlineUsers) : new Set();
       if (Array.isArray(msg.readyUsers)) readyUsers = new Set(msg.readyUsers);
       if (msg.source) setSourceMeta(msg.source);
 
@@ -1234,31 +1447,45 @@
         case 'welcome':
           myUserId = msg.userId;
           $('roomLabel').textContent = `房间 ${msg.room}`;
-          if (msg.source?.kind === 'remote') loadRemoteSource(msg.source);
-          if (msg.source?.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
+          if (msg.source && msg.source.kind === 'remote') loadRemoteSource(msg.source);
+          if (msg.source && msg.source.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
           renderDanmakuHistory(msg.danmaku || []);
           break;
         case 'user-join':
           log('有人加入房间');
+          break;
+        case 'user-reconnect':
+          log('有人回到房间');
+          break;
+        case 'user-away':
+          log('有人暂离房间');
           break;
         case 'user-leave':
           log('有人离开房间');
           break;
         case 'source':
           resetReady();
-          if (msg.source?.kind === 'remote') loadRemoteSource(msg.source);
+          if (msg.source && msg.source.kind === 'remote') loadRemoteSource(msg.source);
           else log('房间切换为本地视频，请选择同一文件');
-          if (msg.source?.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
+          if (msg.source && msg.source.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
           break;
         case 'subtitle':
           if (msg.from === myUserId) return;
           loadSubtitle(msg.url, msg.title);
           break;
+        case 'share_download':
+          if (msg.from === myUserId) return;
+          handleShareDownload(msg);
+          break;
         case 'ready':
         case 'ready-state':
-          if (userCount > 1 && readyUsers.size >= userCount) {
+          let readyOnlineCount = 0;
+          readyUsers.forEach(function(id) {
+            if (onlineUsers.has(id)) readyOnlineCount++;
+          });
+          if (userCount > 1 && readyOnlineCount >= userCount) {
             log('全员就绪，开始同步播放');
-            const targetSpeed = lastSentState?.speed || 1.0;
+            const targetSpeed = (lastSentState && lastSentState.speed) || 1.0;
             roomSpeed = targetSpeed;
             applyRemoteSync(true, 0, targetSpeed);
             lastSentState = { playing: true, time: 0, speed: targetSpeed, ts: Date.now() };
@@ -1319,13 +1546,43 @@
           break;
         case 'danmaku':
           if (msg.item) {
-            addDanmakuToHistory(msg.item);
-            flyDanmaku(msg.item.text, msg.item.color);
+            showDanmaku(msg.item);
           }
           break;
       }
       updateRoomStats();
     }
+
+    function leaveRoomForUnload() {
+      if (!persistentClientEnabled()) return;
+      closingForLeave = true;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: 'leave', clientTs: Date.now() / 1000 }));
+        } catch {
+          // The browser may tear down the page before the final packet is sent.
+        }
+      }
+    }
+
+    function reconnectIfNeeded() {
+      if (!persistentClientEnabled() || !roomID || closingForLeave) return;
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        scheduleReconnect();
+      }
+    }
+
+    window.addEventListener('beforeunload', leaveRoomForUnload);
+    window.addEventListener('online', reconnectIfNeeded);
+    window.addEventListener('pageshow', reconnectIfNeeded);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        reconnectIfNeeded();
+        if (ws && ws.readyState === WebSocket.OPEN && player.currentSrc) {
+          sendState(!player.paused, player.currentTime, 'visible-resume');
+        }
+      }
+    });
 
     function handleSeekSyncStart(msg) {
       const seekId = String(msg.seekId || '');
@@ -1454,7 +1711,7 @@
             console.error('Muted play failed:', e);
           });
         } else {
-          log(`播放失败：${err?.message || err || 'unknown'}`);
+          log(`播放失败：${(err && err.message) || err || 'unknown'}`);
         }
       });
     }
@@ -1692,7 +1949,7 @@
         }
         return false;
       }
-      const tolerance = options.tolerance ?? 0.35;
+      const tolerance = (options.tolerance !== undefined && options.tolerance !== null) ? options.tolerance : 0.35;
       const seekDone = state.seeking === false;
       // Use mockCurrentTime or state.timePos equivalent. Mocked player updates mockCurrentTime.
       const timeReady = true; // currentTime is checked externally by scheduleSeekSyncReady
@@ -1748,10 +2005,10 @@
         roomId: roomID,
         seekId,
         clientId: myUserId,
-        targetTime: pendingSeekSync?.time,
+        targetTime: pendingSeekSync && pendingSeekSync.time,
         currentTime: player.currentTime,
-        playing: pendingSeekSync?.playing,
-        speed: pendingSeekSync?.speed,
+        playing: pendingSeekSync && pendingSeekSync.playing,
+        speed: pendingSeekSync && pendingSeekSync.speed,
         readyCount: readyUsers.size,
         count: userCount || 1
       });
@@ -1796,7 +2053,7 @@
           if (window.AndroidBridge && typeof AndroidBridge.requestMpvState === 'function') {
              AndroidBridge.requestMpvState(); // Actively poll MPV state
           }
-          const mpvCurrentTime = typeof player.mpvState?.timePos === 'number'
+          const mpvCurrentTime = (player.mpvState && typeof player.mpvState.timePos === 'number')
             ? player.mpvState.timePos
             : NaN;
           const closeEnough = Math.abs(mpvCurrentTime - target) <= 0.35;
@@ -1814,11 +2071,11 @@
               currentTime: mpvCurrentTime,
               closeEnough,
               isMocked: true,
-              seeking: player.mpvState?.seeking,
-              pausedForCache: player.mpvState?.pausedForCache,
-              cacheBufferingState: player.mpvState?.cacheBufferingState,
-              hasVideoOut: player.mpvState?.hasVideoOut,
-              eofReached: player.mpvState?.eofReached,
+              seeking: player.mpvState && player.mpvState.seeking,
+              pausedForCache: player.mpvState && player.mpvState.pausedForCache,
+              cacheBufferingState: player.mpvState && player.mpvState.cacheBufferingState,
+              hasVideoOut: player.mpvState && player.mpvState.hasVideoOut,
+              eofReached: player.mpvState && player.mpvState.eofReached,
               ready: false,
               stableCount,
               reason: 'time-not-close-or-missing-state'
@@ -2008,15 +2265,59 @@
       }, 1000);
     }
 
+    function notifyNativeDanmaku(item) {
+      if (!window.AndroidBridge || !item) return;
+      const text = String(item.text || '');
+      const color = String(item.color || '#ffffff');
+      const payload = JSON.stringify(assign({}, item, { text: text, color: color }));
+      const bridgeCalls = [
+        ['onDanmaku', [payload]],
+        ['onDanmakuReceived', [payload]],
+        ['showDanmaku', [text, color]],
+        ['showDanmakuText', [text, color]],
+      ];
+      for (const [method, args] of bridgeCalls) {
+        if (typeof AndroidBridge[method] === 'function') {
+          try {
+            AndroidBridge[method].apply(AndroidBridge, args);
+            return;
+          } catch (err) {
+            console.warn(`AndroidBridge.${method} failed`, err);
+          }
+        }
+      }
+    }
+
     function flyDanmaku(text, color = '#fff') {
+      const stage = $('danmakuStage');
+      if (!stage) return;
       const el = document.createElement('div');
       el.className = 'danmaku-item';
       el.textContent = text;
       el.style.top = `${8 + Math.floor(Math.random() * 62)}%`;
       el.style.color = color;
-      el.style.animationDuration = `${7 + Math.random() * 3}s`;
-      $('danmakuStage').appendChild(el);
-      setTimeout(() => el.remove(), 10500);
+      stage.appendChild(el);
+
+      const stageWidth = stage.clientWidth || stage.getBoundingClientRect().width || window.innerWidth;
+      const itemWidth = el.offsetWidth || el.getBoundingClientRect().width || 160;
+      const duration = 7000 + Math.random() * 3000;
+      el.style.transform = `translate3d(${stageWidth}px, 0, 0)`;
+
+      requestAnimationFrame(() => {
+        if (typeof el.animate === 'function') {
+          el.animate(
+            [
+              { transform: `translate3d(${stageWidth}px, 0, 0)` },
+              { transform: `translate3d(${-itemWidth}px, 0, 0)` },
+            ],
+            { duration, easing: 'linear', fill: 'forwards' }
+          ).onfinish = () => el.remove();
+        } else {
+          el.style.transition = `transform ${duration}ms linear`;
+          el.style.transform = `translate3d(${-itemWidth}px, 0, 0)`;
+        }
+      });
+      setTimeout(() => el.remove(), duration + 500);
     }
 
     function addDanmakuToHistory(item) {
@@ -2031,13 +2332,20 @@
       items.slice(-30).reverse().forEach(addDanmakuToHistory);
     }
 
+    function showDanmaku(item) {
+      addDanmakuToHistory(item);
+      flyDanmaku(item.text, item.color);
+      notifyNativeDanmaku(item);
+    }
+
     async function refreshVendors() {
       try {
         const data = await api('/api/vendors/status');
         $('biliStatus').textContent = data.bilibili.loggedIn ? 'Bilibili 已登录' : 'Bilibili 未登录，解析公开视频通常也可尝试';
         alistAccounts = data.alist || [];
         $('alistAccount').innerHTML = '';
-        for (const item of alistAccounts) {
+        for (var i = 0; i < alistAccounts.length; i++) {
+          const item = alistAccounts[i];
           const opt = document.createElement('option');
           opt.value = item.id;
           opt.textContent = `${item.username}@${item.host}`;
@@ -2050,7 +2358,7 @@
 
     function switchTab(tab) {
       document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-      ['bili', 'alist', 'direct'].forEach(name => $(`tab-${name}`).classList.toggle('hidden', name !== tab));
+      ['bili', 'alist', 'direct', 'local'].forEach(name => $(`tab-${name}`).classList.toggle('hidden', name !== tab));
     }
 
     async function renderAlist(path) {
@@ -2066,7 +2374,8 @@
       }
       const videoExts = /\.(mp4|mkv|webm|avi|flv|wmv|mov|ts|m3u8|mpd|rmvb|3gp|m4v)$/i;
       const subExts = /\.(srt|vtt|ass|ssa)$/i;
-      for (const item of items) {
+      for (var i = 0; i < items.length; i++) {
+        const item = items[i];
         if (!item.isDir && !videoExts.test(item.name) && !subExts.test(item.name)) continue;
 
         const fullPath = joinPath(data.path, item.name);
@@ -2076,6 +2385,7 @@
         if (item.isDir) typeStr = '目录 · ';
         else if (subExts.test(item.name)) typeStr = '字幕 · ';
         row.innerHTML = `<strong>${typeStr}${escapeHtml(item.name)}</strong>`;
+        const isDownloadMode = $('downloadSwitch').checked;
         const btn = document.createElement('button');
         if (item.isDir) {
           btn.className = 'secondary';
@@ -2085,6 +2395,23 @@
               await renderAlist(fullPath);
             } catch (err) {
               alert(err.message);
+            }
+          };
+        } else if (isDownloadMode) {
+          btn.className = 'primary';
+          btn.textContent = '下载';
+          btn.onclick = async () => {
+            try {
+              btn.disabled = true;
+              btn.textContent = '解析中...';
+              const play = await api(`/api/vendor/alist/${sid}/play?path=${encodeURIComponent(fullPath)}`);
+              btn.disabled = false;
+              btn.textContent = '下载';
+              startDownloadFlow(play, item.name, fullPath, sid);
+            } catch (err) {
+              btn.disabled = false;
+              btn.textContent = '下载';
+              alert('解析下载链接失败: ' + err.message);
             }
           };
         } else if (subExts.test(item.name)) {
@@ -2103,6 +2430,12 @@
           btn.onclick = async () => {
             try {
               const play = await api(`/api/vendor/alist/${sid}/play?path=${encodeURIComponent(fullPath)}`);
+              if (play.rawHost) {
+                log(`Alist 直链：host=${play.rawHost} isBaiduPcs=${!!play.isBaiduPcs} headerProfile=${play.headerProfile || 'default'}`);
+                if (isIOS() && play.isBaiduPcs) {
+                  log('iOS 播放该百度网盘直链需要本机代理改写请求头：User-Agent=pan.baidu.com，Referer 为空，Range 保留。');
+                }
+              }
               shareRemote(play.url, play.title);
               // Clear previous subtitles
               const tracks = player.querySelectorAll('track');
@@ -2154,14 +2487,34 @@
       connect(room);
     };
     $('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoin').click(); });
-    $('sourceType').onchange = () => {
-      const local = $('sourceType').value === 'local';
-      $('urlInput').classList.toggle('hidden', local);
-      $('btnLoadUrl').classList.toggle('hidden', local);
-      $('btnFile').classList.toggle('hidden', !local);
+
+    $('btnDirectPlay').onclick = async () => {
+      const url = $('directUrl').value.trim();
+      const customTitle = $('directTitle').value.trim();
+      if (!url) return alert('请输入视频链接');
+
+      const isBili = /bilibili\.com|b23\.tv|BV[a-zA-Z0-9]{10}/i.test(url);
+      if (isBili) {
+        log(`检测到 B站 资源，正在自动提取并解析...`);
+        try {
+          const qn = parseInt($('biliQuality').value) || 80;
+          
+          const data = await api('/api/vendor/bilibili/parse', {
+            method: 'POST',
+            body: { input: url, proxy: false, qn: qn }
+          });
+          
+          log(`B站资源解析成功：${data.title}`);
+          shareRemote(data.url, data.title);
+        } catch (err) {
+          alert(`B站资源解析失败: ${err.message}`);
+          log(`B站资源解析失败: ${err.message}`);
+        }
+      } else {
+        const title = customTitle || url.split('/').pop() || url;
+        shareRemote(url, title);
+      }
     };
-    $('btnLoadUrl').onclick = () => shareRemote($('urlInput').value.trim(), '');
-    $('btnDirectPlay').onclick = () => shareRemote($('directUrl').value.trim(), $('directTitle').value.trim());
     $('btnFile').onclick = () => $('fileInput').click();
     $('fileInput').onchange = e => {
       const file = e.target.files[0];
@@ -2172,9 +2525,11 @@
       }
       localObjectUrl = URL.createObjectURL(file);
       player.src = localObjectUrl;
+      player.dataset.hasSource = '1';
       player.load();
       updateVideoEmpty();
       setSourceMeta({ kind: 'local', title: file.name });
+      $('localFileName').textContent = `已选择本地视频: ${file.name}`;
       resetReady();
       if (ws && ws.readyState === WebSocket.OPEN) send({ type: 'source', kind: 'local', title: file.name });
     };
@@ -2221,14 +2576,14 @@
           } 
         });
         if (data.sourceKind === 'dash') {
-          const v = data.dash.video?.[0];
-          const a = data.dash.audio?.[0];
-          const res = (v?.width && v?.height) ? `${v.width}x${v.height}` : '未知分辨率';
-          const qnId = v?.id ? `qn=${v.id}` : '';
-          log(`Bilibili DASH：视频 ${res} ${qnId} ${v?.codecs || ''}，音频 ${a?.codecs || '未知'}`);
+          const v = data.dash.video && data.dash.video[0];
+          const a = data.dash.audio && data.dash.audio[0];
+          const res = (v && v.width && v.height) ? `${v.width}x${v.height}` : '未知分辨率';
+          const qnId = (v && v.id) ? `qn=${v.id}` : '';
+          log(`Bilibili DASH：视频 ${res} ${qnId} ${(v && v.codecs) || ''}，音频 ${(a && a.codecs) || '未知'}`);
         }
         else log(`Bilibili 播放源：${data.sourceKind || '直链'}`);
-        if (data.debug?.probe) log(`Bilibili 探测：status=${data.debug.probe.status} type=${data.debug.probe.contentType || 'N/A'} range=${data.debug.probe.contentRange || 'N/A'} first=${data.debug.probe.firstBytes || data.debug.probe.error || 'N/A'}`);
+        if (data.debug && data.debug.probe) log(`Bilibili 探测：status=${data.debug.probe.status} type=${data.debug.probe.contentType || 'N/A'} range=${data.debug.probe.contentRange || 'N/A'} first=${data.debug.probe.firstBytes || data.debug.probe.error || 'N/A'}`);
         if (data.debug) log(`Bilibili playurl：format=${data.debug.format || 'N/A'} type=${data.debug.type || 'N/A'} quality=${data.debug.quality || 'N/A'} candidates=${data.debug.candidateCount || 0}`);
         shareRemote(data.url, data.title);
       } catch (err) {
@@ -2275,8 +2630,13 @@
     player.addEventListener('waiting', () => log(`视频 waiting：readyState=${player.readyState} networkState=${player.networkState}`));
     player.addEventListener('error', () => {
       const src = player.currentSrc || player.src || '';
-      log(`视频加载失败，code=${player.error?.code || 'N/A'}，message=${player.error?.message || 'N/A'}，readyState=${player.readyState}，networkState=${player.networkState}，src=${src}`);
-      if (src.includes('bilivideo.com') || src.includes('biliapi') || src.includes('upos-sz')) {
+      const host = safeHost(src);
+      log(`视频加载失败，code=${(player.error && player.error.code) || 'N/A'}，message=${(player.error && player.error.message) || 'N/A'}，readyState=${player.readyState}，networkState=${player.networkState}，currentSrcHost=${host}`);
+      log(`视频错误详情：code=${(player.error && player.error.code) || 'N/A'} networkState=${player.networkState} readyState=${player.readyState} currentSrcHost=${host}`);
+      if (isIOS() && isLikelyBaiduPcsHost(host)) {
+        log('【提示】iOS 网页端无法自行加百度网盘请求头；请检查 Shadowrocket/本机代理日志中是否有该 host 的视频请求，且 User-Agent=pan.baidu.com、Referer 为空、Range 保留。');
+      }
+      if (src.includes('bilivideo.com') || src.includes('biliapi') || src.includes('upos-')) {
         log(`【提示】B站直链加载失败。由于B站防盗链限制，直链在部分浏览器/网络下无法直接播放。请在右侧关闭“开启直链模式”（改用中转模式）并重新解析播放！`);
       }
     });
@@ -2375,11 +2735,37 @@
       $('btnSpeed').textContent = `${speed.toFixed(2).replace(/\.00$/, '')}X`;
     }
 
+    function getSubtitleName(url) {
+      if (!url) return '';
+      try {
+        const parsed = new URL(url);
+        const params = new URLSearchParams(parsed.search);
+        const keys = ['fin', 'name', 'title', 'filename'];
+        for (var i = 0; i < keys.length; i++) {
+          const p = keys[i];
+          const val = params.get(p);
+          if (val) return decodeURIComponent(val);
+        }
+        const pathname = parsed.pathname;
+        const part = pathname.substring(pathname.lastIndexOf('/') + 1);
+        if (part) return decodeURIComponent(part);
+      } catch (e) {
+        // Fallback for non-URL strings
+      }
+      const lastPart = url.split('/').pop() || '';
+      const qIdx = lastPart.indexOf('?');
+      if (qIdx !== -1) {
+        return decodeURIComponent(lastPart.substring(0, qIdx));
+      }
+      return decodeURIComponent(lastPart);
+    }
+
     function shareSubtitle(url, title) {
       if (!url) return alert('请输入字幕链接');
       if (!ws || ws.readyState !== WebSocket.OPEN) return alert('请先加入房间');
-      send({ type: 'subtitle', url, title: title || url.split('/').pop() || url });
-      loadSubtitle(url, title);
+      const cleanTitle = title || getSubtitleName(url);
+      send({ type: 'subtitle', url, title: cleanTitle });
+      loadSubtitle(url, cleanTitle);
     }
 
     function loadSubtitle(url, title) {
@@ -2388,18 +2774,51 @@
       
       $('subUrlInput').value = u;
       
+      const cleanTitle = title || getSubtitleName(u);
+      
+      if (player.textTracks) {
+        for (let i = 0; i < player.textTracks.length; i++) {
+          player.textTracks[i].mode = 'disabled';
+        }
+      }
       const tracks = player.querySelectorAll('track');
       tracks.forEach(track => track.remove());
 
       const track = document.createElement('track');
       track.kind = 'subtitles';
-      track.label = title || '外部字幕';
+      track.label = cleanTitle;
       track.srclang = 'zh';
-      track.src = u;
       track.default = true;
-      player.appendChild(track);
-      if (track.track) {
-        track.track.mode = 'showing';
+      
+      let finalUrl = u;
+      if (!u.startsWith('blob:') && !u.startsWith('data:') && !u.includes('/api/proxy/subtitle')) {
+        finalUrl = `/api/proxy/subtitle?url=${encodeURIComponent(u)}`;
+      }
+      
+      if (finalUrl.startsWith('blob:') || finalUrl.startsWith('data:')) {
+        track.src = finalUrl;
+        player.appendChild(track);
+        if (track.track) track.track.mode = 'showing';
+      } else {
+        fetch(finalUrl)
+          .then(resp => {
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.blob();
+          })
+          .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            track.src = blobUrl;
+            log(`已缓存并加载字幕：${cleanTitle}`);
+            player.appendChild(track);
+            if (track.track) track.track.mode = 'showing';
+          })
+          .catch(err => {
+            console.warn('Subtitle blob caching failed, falling back to direct URL:', err);
+            track.src = finalUrl;
+            log(`已加载字幕（直接加载）：${cleanTitle}`);
+            player.appendChild(track);
+            if (track.track) track.track.mode = 'showing';
+          });
       }
       
       let metaText = $('sourceMeta').textContent;
@@ -2408,13 +2827,20 @@
         if (idx !== -1) {
           metaText = metaText.slice(0, idx);
         }
-        $('sourceMeta').textContent = `${metaText} (字幕: ${title || u})`;
+        $('sourceMeta').textContent = `${metaText} (字幕: ${cleanTitle})`;
+      }
+      
+      // Update subtitle metadata text if the panel exists
+      const subtitleMeta = $('subtitleMeta');
+      if (subtitleMeta) {
+        subtitleMeta.textContent = `当前字幕: ${cleanTitle}`;
       }
       
       if (window.AndroidBridge && typeof AndroidBridge.onSubtitleLoaded === 'function') {
-        AndroidBridge.onSubtitleLoaded(u, title || '');
+        const absoluteProxiedUrl = new URL(finalUrl, window.location.origin).href;
+        AndroidBridge.onSubtitleLoaded(absoluteProxiedUrl, cleanTitle);
       }
-      log(`已加载字幕：${title || u}`);
+      log(`已分发字幕：${cleanTitle}`);
     }
 
     $('btnSpeed').onclick = () => {
@@ -2452,21 +2878,212 @@
     $('btnLoadSub').onclick = () => {
       const url = $('subUrlInput').value.trim();
       if (!url) return alert('请输入字幕链接');
-      shareSubtitle(url, url.split('/').pop());
+      shareSubtitle(url, getSubtitleName(url));
     };
 
     $('subUrlInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnLoadSub').click(); });
 
-    async function init() {
-      // Setup room auto-connect
+    $('btnLocalSub').onclick = () => $('subFileInput').click();
+    $('subFileInput').onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      log(`正在读取并上传本地字幕: ${file.name}...`);
+      try {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const base64Content = btoa(unescape(encodeURIComponent(reader.result)));
+            const data = await api('/api/upload-subtitle', {
+              method: 'POST',
+              body: { name: file.name, content: base64Content }
+            });
+            log(`本地字幕上传成功，正在广播共享...`);
+            shareSubtitle(data.url, data.name);
+          } catch (err) {
+            alert(`上传本地字幕失败: ${err.message}`);
+            log(`上传本地字幕失败: ${err.message}`);
+          }
+        };
+        reader.readAsText(file);
+      } catch (err) {
+        alert(`读取本地字幕失败: ${err.message}`);
+        log(`读取本地字幕失败: ${err.message}`);
+      }
+    };
+
+    // Download Management System
+    $('btnSelectPath').onclick = () => {
+      if (window.AndroidBridge && window.AndroidBridge.selectDownloadPath) {
+        try {
+          const path = window.AndroidBridge.selectDownloadPath();
+          if (path) {
+            $('downloadPathInput').value = path;
+            log(`设置下载路径成功: ${path}`);
+          }
+        } catch (e) {
+          log(`调用路径选择失败: ${e.message}`);
+        }
+      } else {
+        alert("当前运行在普通浏览器端，无法修改本地保存路径。请使用 Windows/Android 客户端运行。");
+      }
+    };
+
+    $('downloadSwitch').onchange = () => {
+      if ($('alistAccount') && $('alistAccount').value) {
+        renderAlist($('alistPath').value).catch(() => {});
+      }
+    };
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function triggerLocalDownload(url, fileName, headersJson) {
+      if (window.AndroidBridge && window.AndroidBridge.downloadFile) {
+        const path = window.AndroidBridge.getDownloadPath ? window.AndroidBridge.getDownloadPath() : "";
+        if (!path) {
+          alert("下载失败：未设置本地下载路径，请先在右侧“下载管理”区域中选择下载路径！");
+          log("下载失败：未设置保存路径。");
+          return;
+        }
+        try {
+          window.AndroidBridge.downloadFile(url, fileName, headersJson);
+        } catch (e) {
+          log(`调用下载接口失败: ${e.message}`);
+        }
+      } else {
+        const warn = confirm("当前运行在普通浏览器端，无法写入自定义本地路径。是否直接通过浏览器默认方式下载此文件？");
+        if (warn) {
+          window.open(url);
+        }
+      }
+    }
+
+    function startDownloadFlow(play, fileName, alistPath, sid) {
+      const shareOption = confirm(`是否下载 [${fileName}] 并将此下载操作共享给房间内其他成员？\n\n(仅针对在线人员，被共享方可选择确认或拒绝下载)`);
+      
+      const headers = {
+        "User-Agent": play.isBaiduPcs 
+          ? "pan.baidu.com" 
+          : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      };
+      if (/bilibili|bilivideo|biliapi|upos-/i.test(play.url)) {
+        headers["Referer"] = "https://www.bilibili.com/";
+      }
+      const headersJson = JSON.stringify(headers);
+
+      triggerLocalDownload(play.url, fileName, headersJson);
+
+      if (shareOption) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          send({
+            type: 'share_download',
+            name: fileName,
+            alistPath: alistPath,
+            sid: sid
+          });
+          log(`已将下载操作广播共享到房间: ${fileName}`);
+        } else {
+          log(`未连接到房间，无法共享下载操作`);
+        }
+      }
+    }
+
+    async function handleShareDownload(msg) {
+      const confirmDownload = confirm(`房间内的用户共享了 Alist 文件下载：\n\n名称: ${msg.name}\n\n是否确认将其下载到您本地的下载目录？`);
+      if (confirmDownload) {
+        const path = window.AndroidBridge && window.AndroidBridge.getDownloadPath ? window.AndroidBridge.getDownloadPath() : "";
+        if (!path) {
+          alert("下载失败：您本地尚未设置下载路径，请先在右侧“下载管理”区域中选择下载路径！");
+          log(`未设置下载路径，拒绝了来自 ${msg.from} 的共享下载。`);
+          return;
+        }
+        
+        log(`正在响应 [${msg.from}] 共享的下载，开始解析 Alist 直链...`);
+        try {
+          const play = await api(`/api/vendor/alist/${msg.sid}/play?path=${encodeURIComponent(msg.alistPath)}`);
+          
+          const headers = {
+            "User-Agent": play.isBaiduPcs 
+              ? "pan.baidu.com" 
+              : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          };
+          if (/bilibili|bilivideo|biliapi|upos-/i.test(play.url)) {
+            headers["Referer"] = "https://www.bilibili.com/";
+          }
+          const headersJson = JSON.stringify(headers);
+          
+          triggerLocalDownload(play.url, msg.name, headersJson);
+        } catch (err) {
+          alert(`解析共享下载链接失败: ${err.message}`);
+          log(`解析 ${msg.name} 直链失败: ${err.message}`);
+        }
+      }
+    }
+
+    window.onDownloadProgress = function(fileName, percent, downloadedBytes, totalBytes, speedMBs, status, message) {
+      let msg = "";
+      if (status === "start") {
+        msg = `开始下载 [${fileName}]...`;
+      } else if (status === "progress") {
+        const speedStr = speedMBs > 0 ? `${speedMBs.toFixed(1)} MB/s` : "";
+        if (totalBytes > 0) {
+          const downloadedStr = formatBytes(downloadedBytes);
+          const totalStr = formatBytes(totalBytes);
+          msg = `下载中 [${fileName}] ${percent.toFixed(1)}%  ${downloadedStr} / ${totalStr}  ${speedStr}`;
+        } else {
+          const downloadedStr = formatBytes(downloadedBytes);
+          msg = `下载中 [${fileName}] 已下载: ${downloadedStr}  ${speedStr}`;
+        }
+      } else if (status === "done") {
+        msg = `下载完成 [${fileName}]，保存在：${message || ""}`;
+      } else if (status === "error") {
+        msg = `下载失败 [${fileName}]：${message}`;
+      }
+      
+      let d = document.getElementById('download-progress-log');
+      if (!d) {
+        d = document.createElement('div');
+        d.id = 'download-progress-log';
+        $('log').prepend(d);
+      }
+      d.textContent = `[${new Date().toLocaleTimeString()}] [下载] ${msg}`;
+      
+      if (status === "done" || status === "error") {
+        d.removeAttribute('id');
+      }
+    };
+
+    function init() {
+      if (window.AndroidBridge && window.AndroidBridge.getDownloadPath) {
+        try {
+          const path = window.AndroidBridge.getDownloadPath();
+          if (path) {
+            $('downloadPathInput').value = path;
+          }
+        } catch (e) {
+          console.warn("Failed to load initial download path:", e);
+        }
+      }
+      // 立即渲染 UI 状态，不等任何异步操作
+      updateVideoEmpty();
+      updateRoomStats();
+
+      // 房间连接立即发起，不等 vendor 状态
       if ($('roomInput').value) {
         connect($('roomInput').value);
       }
-      
-      await refreshVendors();
-      updateRoomStats();
-      updateVideoEmpty();
-      
+
+      // vendor 状态异步加载，完全不阻塞房间连接
+      refreshVendors().catch(err => {
+        console.warn('Vendor status load failed:', err);
+      });
+
       // Auto list alist directory if logged in
       if ($('alistAccount').value && $('alistPath').value) {
         renderAlist($('alistPath').value).catch(err => {

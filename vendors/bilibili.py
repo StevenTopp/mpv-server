@@ -45,7 +45,17 @@ async def resolve_bili_url(text: str) -> str:
                         resp = await client.get(url, follow_redirects=True)
                     return str(resp.url)
                 except Exception as e:
-                    logger.warning(f"Failed to resolve short URL {url}: {e}")
+                    logger.warning(f"Failed to resolve short URL {url} locally: {e}. Trying unshorten.me fallback...")
+                    try:
+                        # Fallback to public unshortening API
+                        api_resp = await client.get(f"https://unshorten.me/json/{url}", timeout=10)
+                        data = api_resp.json()
+                        if data.get("success") and data.get("resolved_url"):
+                            resolved = data["resolved_url"]
+                            logger.info(f"Successfully resolved {url} via fallback API to: {resolved}")
+                            return resolved
+                    except Exception as fallback_err:
+                        logger.error(f"Fallback unshorten API failed: {fallback_err}")
             return url
         return url
     return text
@@ -486,6 +496,11 @@ async def bili_parse(req: BiliParseReq):
     # If req.proxy is True, MPD URLs point to /api/proxy/bilibili?url=...
     # If req.proxy is False, MPD URLs point directly to the Bilibili CDN URLs
     if play_info.get("dash"):
+        if not req.proxy:
+            raise HTTPException(
+                status_code=400,
+                detail="直链模式下无法解析该视频，未返回直链（仅提供DASH格式），解析失败",
+            )
         mpd_id = put_bili_play_info(play_info, req.qn, req.proxy)
         debug = dash_debug_info(play_info, max_qn=req.qn)
         # 打印默认推荐的 DASH 视频分辨率，方便调试

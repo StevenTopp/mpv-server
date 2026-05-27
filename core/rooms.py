@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 from fastapi import WebSocket
-from core.config import MAX_DANMAKU_HISTORY, SYNCTV_DEBUG, logger
+from core.config import MAX_DANMAKU_HISTORY, ROOM_MEMBER_GRACE_SECONDS, SYNCTV_DEBUG, logger
 
 @dataclass
 class Client:
@@ -14,9 +14,17 @@ class Client:
     joined_at: float = field(default_factory=time.time)
 
 @dataclass
+class Member:
+    user_id: str
+    joined_at: float = field(default_factory=time.time)
+    last_seen: float = field(default_factory=time.time)
+    connected: bool = True
+
+@dataclass
 class Room:
     room_id: str
     clients: dict[str, Client] = field(default_factory=dict)
+    members: dict[str, Member] = field(default_factory=dict)
     ready_users: set[str] = field(default_factory=set)
     message_seq: int = 0
     last_status: dict[str, Any] = field(default_factory=dict)
@@ -38,11 +46,36 @@ rooms: dict[str, Room] = {}
 def gen_room_id(length: int = 6) -> str:
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
+def prune_room_members(room: Room, now: float | None = None) -> None:
+    now = time.time() if now is None else now
+    expired = [
+        user_id
+        for user_id, member in room.members.items()
+        if not member.connected and now - member.last_seen > ROOM_MEMBER_GRACE_SECONDS
+    ]
+    for user_id in expired:
+        room.members.pop(user_id, None)
+        room.ready_users.discard(user_id)
+    room.ready_users.intersection_update(room.members.keys())
+
 def public_room(room: Room) -> dict[str, Any]:
-    room.ready_users.intersection_update(room.clients.keys())
+    now = time.time()
+    for user_id, client in room.clients.items():
+        room.members.setdefault(
+            user_id,
+            Member(user_id=user_id, joined_at=client.joined_at, last_seen=now, connected=True),
+        )
+    prune_room_members(room, now)
+    online_users = sorted(room.clients.keys())
+    member_users = sorted(room.members.keys())
+    away_users = sorted(user_id for user_id in member_users if user_id not in room.clients)
     return {
         "room": room.room_id,
-        "count": len(room.clients),
+        "count": len(online_users),
+        "onlineCount": len(online_users),
+        "memberCount": len(member_users),
+        "onlineUsers": online_users,
+        "awayUsers": away_users,
         "readyUsers": sorted(room.ready_users),
         "readyCount": len(room.ready_users),
         "source": room.source,
@@ -94,4 +127,7 @@ async def broadcast(room: Room, data: dict[str, Any], exclude: str | None = None
 
     for user_id in dead:
         room.clients.pop(user_id, None)
-        room.ready_users.discard(user_id)
+        member = room.members.get(user_id)
+        if member:
+            member.connected = False
+            member.last_seen = time.time()

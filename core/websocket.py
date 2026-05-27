@@ -1,14 +1,17 @@
 import json
 import time
 import asyncio
+import re
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from core.config import MAX_DANMAKU_HISTORY, SYNCTV_DEBUG, logger
+from core.config import CLIENT_ID_ENABLED, MAX_DANMAKU_HISTORY, ROOM_MEMBER_GRACE_SECONDS, SYNCTV_DEBUG, logger
 from core.rooms import (
     rooms,
     Room,
     Client,
+    Member,
     gen_room_id,
     public_room,
+    prune_room_members,
     send_json,
     broadcast,
     next_room_seq,
@@ -16,6 +19,12 @@ from core.rooms import (
 )
 
 router = APIRouter()
+
+CLIENT_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{6,80}$")
+
+def normalize_client_id(value: str | None) -> str:
+    value = (value or "").strip()
+    return value if CLIENT_ID_RE.match(value) else gen_room_id(12)
 
 def seek_ready_users(pending: dict, room: Room) -> set[str]:
     ready_users = pending.get("readyUsers")
@@ -28,6 +37,15 @@ def seek_ready_users(pending: dict, room: Room) -> set[str]:
 def seek_not_ready_users(pending: dict, room: Room) -> list[str]:
     ready_users = seek_ready_users(pending, room)
     return sorted(uid for uid in room.clients.keys() if uid not in ready_users)
+
+async def prune_room_after_grace(room_id: str) -> None:
+    await asyncio.sleep(ROOM_MEMBER_GRACE_SECONDS + 1)
+    room = rooms.get(room_id)
+    if not room:
+        return
+    prune_room_members(room)
+    if not room.clients and not room.members:
+        rooms.pop(room_id, None)
 
 async def finish_seek_sync(room_id: str, seek_id: str, reason: str = "ready") -> None:
     room = rooms.get(room_id)
@@ -124,13 +142,57 @@ async def ws_endpoint(websocket: WebSocket):
 
     await websocket.accept()
     room = rooms.setdefault(room_id, Room(room_id=room_id))
-    user_id = gen_room_id()
+    prune_room_members(room)
+    client_id_param = (websocket.query_params.get("client_id") or "").strip()
+    sticky_member = CLIENT_ID_ENABLED and bool(CLIENT_ID_RE.match(client_id_param))
+    user_id = normalize_client_id(client_id_param) if sticky_member else gen_room_id()
+    previous_client = room.clients.get(user_id) if sticky_member else None
+    if previous_client and previous_client.websocket is not websocket:
+        try:
+            await previous_client.websocket.close(code=4001)
+        except Exception:
+            pass
+    was_member = sticky_member and user_id in room.members
+    member = room.members.get(user_id) or Member(user_id=user_id)
+    member.connected = True
+    member.last_seen = time.time()
+    room.members[user_id] = member
     room.clients[user_id] = Client(websocket=websocket, user_id=user_id)
-    logger.info("ws join room=%s user=%s clients=%s", room_id, user_id, len(room.clients))
+    logger.info(
+        "ws join room=%s user=%s clients=%s members=%s sticky=%s reconnected=%s",
+        room_id,
+        user_id,
+        len(room.clients),
+        len(room.members),
+        sticky_member,
+        was_member,
+    )
 
-    await send_json(websocket, {"type": "welcome", "userId": user_id, "serverSeq": next_room_seq(room), **public_room(room)})
-    await broadcast(room, {"type": "user-join", "userId": user_id, "serverSeq": next_room_seq(room), **public_room(room)}, exclude=user_id)
+    await send_json(
+        websocket,
+        {
+            "type": "welcome",
+            "userId": user_id,
+            "reconnected": was_member,
+            "stickyMember": sticky_member,
+            "memberGraceSeconds": ROOM_MEMBER_GRACE_SECONDS,
+            "serverSeq": next_room_seq(room),
+            **public_room(room),
+        },
+    )
+    await broadcast(
+        room,
+        {
+            "type": "user-reconnect" if was_member else "user-join",
+            "userId": user_id,
+            "stickyMember": sticky_member,
+            "serverSeq": next_room_seq(room),
+            **public_room(room),
+        },
+        exclude=user_id,
+    )
 
+    intentional_leave = False
     try:
         while True:
             raw = await websocket.receive_text()
@@ -144,6 +206,16 @@ async def ws_endpoint(websocket: WebSocket):
             msg_type = msg.get("type")
             if SYNCTV_DEBUG:
                 logger.debug("ws recv room=%s user=%s %s", room_id, user_id, summarize_ws_payload(msg))
+
+            if msg_type == "leave":
+                intentional_leave = True
+                logger.info("ws explicit leave room=%s user=%s", room_id, user_id)
+                try:
+                    await websocket.close(code=1000)
+                except Exception:
+                    pass
+                break
+
             if msg_type == "source":
                 kind = str(msg.get("kind") or "remote")
                 url = str(msg.get("url") or "").strip()
@@ -220,7 +292,7 @@ async def ws_endpoint(websocket: WebSocket):
                 target_time = float(msg.get("time") or 0)
                 speed = float(msg.get("speed") or 1)
                 playing = bool(msg.get("playing"))
-                timeout_ms = int(msg.get("timeoutMs") or 5000)
+                timeout_ms = int(msg.get("timeoutMs") or 8000)
                 timeout_ms = min(max(timeout_ms, 1500), 10000)
                 old_pending = room.pending_seek
                 if old_pending and old_pending.get("id"):
@@ -402,9 +474,28 @@ async def ws_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     finally:
-        room.clients.pop(user_id, None)
-        room.ready_users.discard(user_id)
-        logger.info("ws leave room=%s user=%s clients=%s", room_id, user_id, len(room.clients))
+        current_client = room.clients.get(user_id)
+        owns_active_connection = bool(current_client and current_client.websocket is websocket)
+        if owns_active_connection:
+            room.clients.pop(user_id, None)
+
+        if (intentional_leave or not sticky_member) and (owns_active_connection or current_client is None):
+            room.members.pop(user_id, None)
+            room.ready_users.discard(user_id)
+        elif owns_active_connection or current_client is None:
+            member = room.members.get(user_id)
+            if member:
+                member.connected = False
+                member.last_seen = time.time()
+
+        logger.info(
+            "ws leave room=%s user=%s clients=%s members=%s intentional=%s",
+            room_id,
+            user_id,
+            len(room.clients),
+            len(room.members),
+            intentional_leave,
+        )
         pending = room.pending_seek
         if pending and pending.get("id"):
             ready_users = seek_ready_users(pending, room)
@@ -421,10 +512,23 @@ async def ws_endpoint(websocket: WebSocket):
                 len(room.clients),
                 seek_not_ready_users(pending, room),
             )
-        if not room.clients:
+        should_announce_leave = owns_active_connection or current_client is None
+        prune_room_members(room)
+        if not room.clients and not room.members:
             rooms.pop(room_id, None)
-        else:
-            await broadcast(room, {"type": "user-leave", "userId": user_id, "serverSeq": next_room_seq(room), **public_room(room)})
+        elif should_announce_leave:
+            await broadcast(
+                room,
+                {
+                    "type": "user-away" if sticky_member and not intentional_leave else "user-leave",
+                    "userId": user_id,
+                    "stickyMember": sticky_member,
+                    "serverSeq": next_room_seq(room),
+                    **public_room(room),
+                },
+            )
+            if sticky_member and not intentional_leave:
+                asyncio.create_task(prune_room_after_grace(room_id))
             if pending and pending.get("id"):
                 seek_id = pending["id"]
                 ready_users = pending.get("readyUsers")

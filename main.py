@@ -2,8 +2,12 @@ import argparse
 import logging
 import os
 import sys
-from fastapi import FastAPI, Request
+import base64
+import time
+import urllib.parse
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 if "--debug" in sys.argv:
     os.environ["SYNCTV_DEBUG"] = "1"
@@ -29,18 +33,74 @@ for noisy_logger in ("httpcore", "httpx", "websockets"):
 app = FastAPI(title="SyncTV Mine")
 
 @app.middleware("http")
-async def no_cache_for_frontend(request: Request, call_next):
+async def cache_middleware(request: Request, call_next):
     response = await call_next(request)
-    if request.url.path == "/" or request.url.path.endswith((".html", ".js", ".css")):
+    path = request.url.path
+    if path == "/" or path.endswith(".html"):
+        # HTML 页面不缓存，保证每次都拿到最新版本
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+    elif path in ("/hls.min.js", "/dash.all.min.js"):
+        # 大型库文件内容不变，缓存 1 天（86400s），大幅减少重复访问的下载量
+        response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
 # Mount Submodule Routers
 app.include_router(ws_router)
 app.include_router(alist_router)
 app.include_router(bilibili_router)
+
+class SubtitleUploadReq(BaseModel):
+    name: str
+    content: str  # Base64 encoded subtitle string
+
+class ClientLogReq(BaseModel):
+    level: str = "info"
+    message: str
+
+@app.post("/api/upload-subtitle")
+async def upload_subtitle(req: SubtitleUploadReq):
+    # Ensure filename is safe (alphanumeric, dot, underscore, dash)
+    safe_name = "".join(c for c in req.name if c.isalnum() or c in "._-").strip()
+    if not safe_name:
+        safe_name = "sub.srt"
+        
+    temp_dir = BASE_DIR / "static" / "temp_subs"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Expire old files (> 2 hours)
+    try:
+        now = time.time()
+        for f in temp_dir.iterdir():
+            if f.is_file() and now - f.stat().st_mtime > 7200:
+                f.unlink()
+    except Exception as e:
+        logger.warning(f"Error cleaning temp subtitles: {e}")
+        
+    file_path = temp_dir / safe_name
+    try:
+        file_bytes = base64.b64decode(req.content)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"保存字幕失败: {e}")
+        
+    encoded_name = urllib.parse.quote(safe_name)
+    return {"url": f"/temp_subs/{encoded_name}", "name": safe_name}
+
+@app.post("/api/debug/client-log")
+async def client_log(req: ClientLogReq, request: Request):
+    message = req.message[:800]
+    level = req.level.lower()[:16]
+    logger.info(
+        "client-log ip=%s ua=%s level=%s message=%s",
+        request.client.host if request.client else "",
+        request.headers.get("user-agent", "")[:180],
+        level,
+        message,
+    )
+    return {"ok": True}
 
 @app.post("/api/create-room")
 async def create_room():

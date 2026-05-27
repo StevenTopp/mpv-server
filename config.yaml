@@ -1,0 +1,4 @@
+# Server-side feature switches.
+# client_id=false keeps the original room lifecycle: WebSocket disconnect means leaving the room.
+# client_id=true enables stable client ids, 30-minute away retention, and foreground reconnect.
+client_id: true
