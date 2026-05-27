@@ -1625,8 +1625,7 @@
       setSyncOverlay(true, `Waiting for clients (${msg.readyCount || 0}/${msg.count || userCount || 1})`);
 
       const timeDiff = Math.abs(player.currentTime - targetTime);
-      const isClientEnv = window.AndroidBridge || (player._isMocked && player.mpvState);
-      const needForceCurrentTime = isClientEnv && (msg.from !== myUserId || timeDiff > 0.5);
+      const needForceCurrentTime = player._isMocked && player.mpvState;
 
       if (msg.from !== myUserId || needForceCurrentTime) {
         isSyncing = true;
@@ -1787,7 +1786,7 @@
               player.play().catch(() => {});
             }
             setTimeout(() => { isSyncing = false; }, 300);
-          }, 300);
+          }, 50);
         } else {
           pendingProgrammaticSeekCompletion = true;
           pendingPlayAfterSeek = shouldPlay;
