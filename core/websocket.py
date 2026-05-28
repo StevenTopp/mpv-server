@@ -293,7 +293,7 @@ async def ws_endpoint(websocket: WebSocket):
                 speed = float(msg.get("speed") or 1)
                 playing = bool(msg.get("playing"))
                 timeout_ms = int(msg.get("timeoutMs") or 8000)
-                timeout_ms = min(max(timeout_ms, 1500), 10000)
+                timeout_ms = min(max(timeout_ms, 1500), 30000)
                 old_pending = room.pending_seek
                 if old_pending and old_pending.get("id"):
                     force_user_seek = bool(msg.get("forceUserSeek"))

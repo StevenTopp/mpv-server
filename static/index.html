@@ -1077,6 +1077,7 @@
     let isSyncing = false;
     let pendingPlayAfterSeek = false;
     let pendingProgrammaticSeekCompletion = false;
+    let programmaticSeekGeneration = 0;
     let lastKnownPlayingState = false;
     let isUserSeeking = false;
     let lastSentState = null;
@@ -1099,7 +1100,7 @@
     const DRIFT_HARD_THRESHOLD = 3.5;
     const DRIFT_SPEED_DELTA = 0.1;
     const STAGGER_DELAY = 500;
-    const SEEK_SYNC_TIMEOUT_MS = 8000;
+    const SEEK_SYNC_TIMEOUT_MS = 20000;
     const SEEK_SYNC_READY_TOLERANCE = 0.35;
 
     function log(msg) {
@@ -1627,7 +1628,7 @@
       setSyncOverlay(true, `Waiting for clients (${msg.readyCount || 0}/${msg.count || userCount || 1})`);
 
       const timeDiff = Math.abs(player.currentTime - targetTime);
-      const needForceCurrentTime = player._isMocked && player.mpvState;
+      const needForceCurrentTime = player._isMocked && player.mpvState && (msg.from !== myUserId || timeDiff > 0.5);
 
       if (msg.from !== myUserId || needForceCurrentTime) {
         isSyncing = true;
@@ -1721,28 +1722,34 @@
       });
     }
 
-    function completePendingProgrammaticSeek(reason) {
+    function completePendingProgrammaticSeek(gen, reason) {
+      if (gen !== programmaticSeekGeneration) return;
       if (!pendingProgrammaticSeekCompletion && !isSyncing) return;
       pendingProgrammaticSeekCompletion = false;
       const shouldPlay = !!pendingPlayAfterSeek;
       pendingPlayAfterSeek = false;
 
       setTimeout(() => {
+        if (gen !== programmaticSeekGeneration) return;
         if (shouldPlay) {
           log(`${reason || 'sync'} 后自动开始播放 (延迟0.3s对齐)`);
           robustPlay();
         }
         setSyncOverlay(false);
-        setTimeout(() => { isSyncing = false; }, 300);
+        setTimeout(() => {
+          if (gen !== programmaticSeekGeneration) return;
+          isSyncing = false; 
+        }, 300);
       }, 300);
     }
 
-    function scheduleProgrammaticSeekFallback(targetTime, reason) {
+    function scheduleProgrammaticSeekFallback(gen, targetTime, reason) {
       if (player._isMocked) return;
       const startedAt = Date.now();
       const maxWaitMs = 1500;
 
       const check = () => {
+        if (gen !== programmaticSeekGeneration) return;
         if (!isSyncing) return;
         if (player._isMocked) return;
 
@@ -1763,7 +1770,7 @@
             timedOut,
             pendingPlayAfterSeek
           });
-          completePendingProgrammaticSeek(timedOut ? `${reason || 'sync'} fallback` : reason);
+          completePendingProgrammaticSeek(gen, timedOut ? `${reason || 'sync'} fallback` : reason);
           return;
         }
 
@@ -1779,28 +1786,34 @@
       lastKnownPlayingState = shouldPlay;
       player.playbackRate = targetSpeed;
       player.pause();
+      programmaticSeekGeneration++;
+      const currentGen = programmaticSeekGeneration;
       if (Number.isFinite(targetTime)) {
         const compensation = parseFloat($('compInput').value) || 0;
         if (player._isMocked) {
           player.currentTime = Math.max(0, targetTime + (shouldPlay ? compensation * targetSpeed : 0));
           setTimeout(() => {
+            if (currentGen !== programmaticSeekGeneration) return;
             if (shouldPlay) {
               log(reason === 'timeout' ? 'Timeout后自动开始播放' : '自动开始播放');
               player.play().catch(() => {});
             }
-            setTimeout(() => { isSyncing = false; }, 300);
+            setTimeout(() => {
+              if (currentGen !== programmaticSeekGeneration) return;
+              isSyncing = false; 
+            }, 300);
           }, 50);
         } else {
           pendingProgrammaticSeekCompletion = true;
           pendingPlayAfterSeek = shouldPlay;
           const finalTime = Math.max(0, targetTime + (shouldPlay ? compensation * targetSpeed : 0));
           player.currentTime = finalTime;
-          scheduleProgrammaticSeekFallback(finalTime, reason);
+          scheduleProgrammaticSeekFallback(currentGen, finalTime, reason);
         }
       } else {
         pendingProgrammaticSeekCompletion = true;
         pendingPlayAfterSeek = shouldPlay;
-        completePendingProgrammaticSeek(reason);
+        completePendingProgrammaticSeek(currentGen, reason);
       }
     }
 
@@ -2125,6 +2138,7 @@
         return;
       }
       const seekId = newSeekSyncId();
+      programmaticSeekGeneration++;
       if (window.AndroidBridge && typeof window.AndroidBridge.setActiveSeekId === 'function') {
         window.AndroidBridge.setActiveSeekId(seekId);
       }
@@ -2185,25 +2199,31 @@
       const targetSpeed = typeof speed === 'number' ? speed : 1.0;
       player.playbackRate = targetSpeed;
       player.pause();
+      programmaticSeekGeneration++;
+      const currentGen = programmaticSeekGeneration;
       if (Number.isFinite(time)) {
         const compensation = parseFloat($('compInput').value) || 0;
         if (player._isMocked) {
           player.currentTime = Math.max(0, time + (playing ? compensation * targetSpeed : 0));
           setTimeout(() => {
+            if (currentGen !== programmaticSeekGeneration) return;
             if (playing) player.play().catch(() => { });
-            setTimeout(() => { isSyncing = false; }, 300);
+            setTimeout(() => {
+              if (currentGen !== programmaticSeekGeneration) return;
+              isSyncing = false; 
+            }, 300);
           }, 50);
         } else {
           pendingProgrammaticSeekCompletion = true;
           pendingPlayAfterSeek = playing;
           const finalTime = Math.max(0, time + (playing ? compensation * targetSpeed : 0));
           player.currentTime = finalTime;
-          scheduleProgrammaticSeekFallback(finalTime, 'remote-sync');
+          scheduleProgrammaticSeekFallback(currentGen, finalTime, 'remote-sync');
         }
       } else {
         pendingProgrammaticSeekCompletion = true;
         pendingPlayAfterSeek = playing;
-        completePendingProgrammaticSeek('remote-sync');
+        completePendingProgrammaticSeek(currentGen, 'remote-sync');
       }
     }
 
