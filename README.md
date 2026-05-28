@@ -1,12 +1,22 @@
-# SyncTV Couple (Web 端同步观影系统)
+# SyncTV Couple (Web 端同步观影系统) - v1.0 正式版 🚀
 
+[![Version](https://img.shields.io/badge/version-v1.0--stable-red.svg)](https://github.com/StevenTopp/mpv-server)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-v0.95.0%2B-green)](https://fastapi.tiangolo.com/)
 
-`SyncTV Couple` 是一款专为情侣及好友设计的高颜值、轻量级**实时同步观影系统**。本系统采用前后端分离设计，后端基于 Python FastAPI 异步框架与 WebSocket 协议实现多房间高精度状态同步；前端基于原生 HTML5 + 现代化 CSS 磨砂玻璃美学，提供丝滑的网页播放与第三方资源一键解析。
+`SyncTV Couple` 是一款专为情侣及好友设计的高颜值、轻量级**实时高保真同步观影系统**。本系统采用前后端分离设计，后端基于 Python FastAPI 异步框架与 WebSocket 协议实现多房间高精度状态同步；前端基于原生 HTML5 + 现代化 CSS 磨砂玻璃美学，提供丝滑的网页播放与第三方资源一键解析。
 
-同时支持与 [mpv-android (SyncTV 专属定制版)](https://github.com/StevenTopp/mpv_synctv_couple) 原生客户端双向同步联动，彻底打破移动端浏览器的播放格式限制！
+**v1.0 正式版**实现了跨三端（Web 网页端、Windows WPF 客户端、Android 原生客户端）的高精度双向同步联动，彻底打破移动端及 PC 端的格式解码与播放同步限制，进入工业级稳定阶段！
+
+---
+
+## 🌟 v1.0 核心更新与稳定特性
+
+本版本（v1.0）正式合入了历经多周深度调试与重构的 **BUG-012 至 BUG-017 协同稳定修复**，大幅度提升了高频复杂交互下的同步稳定度：
+* **缓冲拉流高保真探测 (BUG-012/013/014)**：统一了本地主动拖拽寻址与远程同步的缓冲探测逻辑，通过 `RunBufferProbe` 静音拉流机制，确保所有客户端在实际拉流就绪、可平滑播放后才宣布 Ready，杜绝了画面瞬间卡死、音频抢跑等顽疾。
+* **高频寻址世代计数器机制 (BUG-017)**：在网页端主控逻辑与 `remote_index.html` 中引入了 `programmaticSeekGeneration` 世代锁。通过异步闭包校验，完美过滤和拦截了旧世代的 seek fallback 超时回调，彻底解决多次快速连续拖动进度条时遮罩提前消失以及独自播放的顽疾。
+* **微调对齐优化与跳过探测 (BUG-016)**：当房间内播放状态转换至同步完成起播（微调对齐阶段）时，客户端自动判断并跳过冗余的缓冲探测流程，杜绝了起播瞬间反复暂停的问题。
 
 ---
 
@@ -52,23 +62,21 @@ pip install -r requirements.txt
 ### 2. 启动服务
 通过 `uvicorn` 高性能 Web 服务器运行主程序：
 ```bash
-# 默认启动在 9997 端口（可通过 --port 自由修改）
-uvicorn main:app --host 0.0.0.0 --port 9997
+# 默认启动在 9990 端口（可自由修改）
+python main.py --host 0.0.0.0 --port 9990 --debug
 ```
-
-### 3. 本地专属快捷方式
-本地环境中可以直接运行 `run_synctv_local_30008.cmd`（若已配置），将自动拉起特定端口的本地服务器。
 
 ---
 
 ## 🛠️ 项目结构
 ```text
-synctv_couple/
+mpv-server/
 ├── core/                # 核心同步逻辑 (房间管理、Websocket 消息分发)
 ├── data/                # 本地数据目录 (vendor_state.json - 自动生成且已忽略)
 ├── static/              # 前端静态资源 (网页交互主页 index.html, index.css, index.js)
 ├── vendors/             # 第三方解析模块 (Alist APIs, Bilibili APIs)
 ├── main.py              # FastAPI 入口服务
+├── remote_index.html    # 原生客户端桥接定制控制面板
 ├── requirements.txt     # 项目 Python 依赖包清单
 └── README.md            # 项目功能说明手册
 ```
