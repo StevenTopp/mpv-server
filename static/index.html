@@ -2412,7 +2412,10 @@
         dashPlayer.reset();
         dashPlayer = null;
       }
+      // 换源清理：mock 播放器的此次 pause 仅清理 HTML5 状态，不应传播到 MPV
+      if (player._isMocked) { isSyncing = true; }
       player.pause();
+      if (player._isMocked) { isSyncing = false; }
       player.removeAttribute('src');
       delete player.dataset.hasSource;
       if (isBiliDirectUrl) {
