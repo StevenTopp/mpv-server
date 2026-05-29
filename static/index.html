@@ -16,6 +16,14 @@
       }
     })();
   </script>
+  <script>
+    // AOT 客户端环境预判，防止首屏加载时的画面框闪现和布局重排 (CLS)
+    (function() {
+      if (window.AndroidBridge || (window.chrome && window.chrome.webview)) {
+        document.documentElement.classList.add('is-mocked');
+      }
+    })();
+  </script>
   <!-- Load Premium Fonts (non-render-blocking) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -830,6 +838,102 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+
+    /* 客户端托管模式下的网页美化样式（仅隐藏画面框，支持 html 或 body 上挂载 is-mocked） */
+    .is-mocked .video-frame {
+      display: none !important; /* 只隐藏 HTML5 画面框 */
+    }
+    .is-mocked .layout {
+      grid-template-columns: 1fr !important; /* 网页拉宽为单栏自适应布局 */
+    }
+    
+    /* 针对客户端侧边栏进行极致美化的重构控制条 */
+    .is-mocked .control-strip {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      padding: 12px !important;
+      grid-template-columns: none !important; /* 解绑原有的三列网格 */
+      background: rgba(0, 0, 0, 0.25) !important;
+      min-height: unset !important;
+    }
+    .is-mocked .theater {
+      min-height: unset !important;
+      border-radius: 12px;
+    }
+
+    /* 第一行：状态信息群 (Pills) 置顶微型化，以视觉 order=1 排布 */
+    .is-mocked .control-strip .status-stack {
+      order: 1 !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      justify-content: center !important;
+      width: 100% !important;
+    }
+    .is-mocked .control-strip .status-stack .pill {
+      min-height: 26px !important;
+      padding: 4px 10px !important;
+      font-size: 11px !important;
+      border-radius: 6px !important;
+      background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    /* 第二行：核心交互按钮 (就绪 & 倍速) 横向 50% 均分填满，以视觉 order=2 排布 */
+    .is-mocked .control-strip > div:first-child {
+      order: 2 !important;
+      display: flex !important;
+      width: 100% !important;
+      gap: 8px !important;
+    }
+    .is-mocked .control-strip > div:first-child button {
+      flex: 1 !important; /* 平分空间 */
+      height: 36px !important; /* 高度微调紧凑 */
+      font-size: 13px !important;
+      border-radius: 8px !important;
+    }
+
+    /* 第三行：微调开关与阈值配置 横向两极分布，以视觉 order=3 排布 */
+    .is-mocked .control-strip > div:last-child {
+      order: 3 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      width: 100% !important;
+      padding-top: 8px !important;
+      border-top: 1px dashed var(--surface-border) !important; /* 增加精致分割线 */
+    }
+    .is-mocked .control-strip .toggle-container {
+      gap: 6px !important;
+      padding: 0 !important;
+    }
+    .is-mocked .control-strip .toggle-label {
+      font-size: 12px !important;
+    }
+    .is-mocked .control-strip .switch {
+      width: 38px !important;
+      height: 20px !important;
+    }
+    .is-mocked .control-strip .slider:before {
+      height: 14px !important;
+      width: 14px !important;
+      left: 2px !important;
+      bottom: 2px !important;
+    }
+    .is-mocked .control-strip input:checked + .slider:before {
+      transform: translateX(18px) !important;
+    }
+    
+    .is-mocked .control-strip .sync-control {
+      font-size: 12px !important;
+      gap: 6px !important;
+    }
+    .is-mocked .control-strip .sync-control input {
+      width: 48px !important;
+      height: 26px !important;
+      font-size: 12px !important;
+      border-radius: 6px !important;
+    }
   </style>
 </head>
 
@@ -1064,6 +1168,27 @@
       return target;
     }
     const player = $('player');
+    
+    // FEAT-020: 劫持 player._isMocked，当客户端环境或显式设为 true 时动态挂载样式类
+    let mockedValue = !!player._isMocked;
+    if (mockedValue) {
+      document.documentElement.classList.add('is-mocked');
+    }
+    Object.defineProperty(player, '_isMocked', {
+      get: function() {
+        return mockedValue;
+      },
+      set: function(val) {
+        mockedValue = !!val;
+        if (mockedValue) {
+          document.documentElement.classList.add('is-mocked');
+        } else {
+          document.documentElement.classList.remove('is-mocked');
+        }
+      },
+      configurable: true
+    });
+
     let ws = null;
     let roomID = '';
     let myUserId = '';
