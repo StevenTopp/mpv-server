@@ -2568,7 +2568,6 @@
           } else {
             $('roomLabel').textContent = `房间 ${msg.room}`;
           }
-          log('[debug-welcome] source=' + JSON.stringify(msg.source || null));
           if (msg.source && msg.source.kind === 'remote') loadRemoteSource(msg.source);
           if (msg.source && msg.source.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
           renderDanmakuHistory(msg.danmaku || []);
