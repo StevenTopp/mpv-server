@@ -44,7 +44,7 @@ async def prune_room_after_grace(room_id: str) -> None:
     if not room:
         return
     prune_room_members(room)
-    if not room.clients and not room.members:
+    if not room.clients:
         rooms.pop(room_id, None)
 
 async def finish_seek_sync(room_id: str, seek_id: str, reason: str = "ready") -> None:
@@ -541,7 +541,7 @@ async def ws_endpoint(websocket: WebSocket):
             )
         should_announce_leave = owns_active_connection or current_client is None
         prune_room_members(room)
-        if not room.clients and not room.members:
+        if not room.clients:
             rooms.pop(room_id, None)
         elif should_announce_leave:
             await broadcast(
