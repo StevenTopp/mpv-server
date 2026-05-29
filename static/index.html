@@ -727,6 +727,37 @@
       transform: scale(0.95);
     }
 
+    /* Special STANDOUT Navigation Accent Buttons (FEAT-022) */
+    .btn-nav-accent {
+      color: #fff !important;
+      background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%) !important;
+      border: 1px solid rgba(167, 139, 250, 0.4) !important;
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .btn-nav-accent:hover {
+      background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%) !important;
+      border-color: rgba(192, 132, 252, 0.5) !important;
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5) !important;
+      transform: translateY(-2px);
+    }
+    .btn-nav-accent:active {
+      transform: translateY(1px);
+    }
+
+    /* Day Mode (Light theme) Standout Navigation Buttons */
+    :root.light-mode .btn-nav-accent {
+      color: #fff !important;
+      background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%) !important;
+      border: 1px solid rgba(96, 165, 250, 0.4) !important;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25) !important;
+    }
+    :root.light-mode .btn-nav-accent:hover {
+      background: linear-gradient(135deg, #93c5fd 0%, #3b82f6 100%) !important;
+      border-color: rgba(147, 197, 253, 0.5) !important;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+    }
+
     /* Cozy Dynamic Virtual Corkboard Overlay (悄悄话便签板) */
     .wall-overlay {
       position: fixed;
@@ -1768,8 +1799,8 @@
     <div id="lobbyView" class="lobby-view">
       <header class="lobby-header">
         <div class="brand">
-          <h1>我的私人影院</h1>
-          <p>一次绑定，多端直达，专属加密对等放映厅</p>
+          <h1>一起看电影吖</h1>
+          <p>Cozy up for a movie · 私人对等放映厅</p>
         </div>
         <div class="lobby-user-status">
           <span class="user-badge">👤 <span id="lobbyUsername">Username</span></span>
@@ -1780,7 +1811,7 @@
       <div class="lobby-layout">
         <!-- Left: Paired Rooms List -->
         <section class="lobby-panel rooms-section">
-          <h2>🏠 我的专属放映厅</h2>
+          <h2 id="pairedRoomsHeader">🏠 我的放映厅</h2>
           <div id="pairedRoomsList" class="paired-rooms-list">
             <!-- Dynamic list -->
           </div>
@@ -1868,7 +1899,7 @@
           <div style="display: flex; gap: 8px;">
             <button id="btnReady" disabled>我已就绪</button>
             <button id="btnSpeed" class="secondary">1.0X</button>
-            <button id="btnLeaveRoom" class="secondary">返回大厅</button>
+            <button id="btnLeaveRoom" class="btn-nav-accent">返回大厅</button>
           </div>
           <div class="status-stack">
             <span class="pill"><span class="dot" id="connDot"></span><span id="connText">未连接</span></span>
@@ -1901,20 +1932,28 @@
 
           <!-- Alist Section -->
           <div id="tab-alist" class="stack">
-            <input id="alistHost" placeholder="Alist 根地址 (如 https://alist.example.com)">
-            <div class="grid2">
-              <input id="alistUser" placeholder="用户名">
-              <input id="alistPass" type="password" placeholder="密码">
+            <button id="btnAlistToggleLogin" class="secondary" style="width: 100%; height: 38px; font-size: 13px; display: flex; justify-content: space-between; border-radius: 8px;">
+              <span>🔑 登录新 Alist 账号</span>
+              <span id="alistToggleArrow">▼</span>
+            </button>
+            <div id="alistLoginFields" class="stack hidden" style="border: 1px solid var(--surface-border); padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.15); gap: 10px;">
+              <input id="alistHost" placeholder="Alist 根地址 (如 https://alist.example.com)">
+              <div class="grid2">
+                <input id="alistUser" placeholder="用户名">
+                <input id="alistPass" type="password" placeholder="密码">
+              </div>
+              <button id="btnAlistLogin" style="width: 100%; height: 38px;">立即登录</button>
             </div>
-            <div class="grid2">
-              <button id="btnAlistLogin">登录 Alist</button>
-              <button id="btnAlistRoot" class="secondary">根目录</button>
+            
+            <div class="grid2" style="grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;">
+              <select id="alistAccount" style="height: 38px; border-radius: 8px;"></select>
+              <button id="btnAlistRoot" class="secondary" style="height: 38px; border-radius: 8px; font-size: 13px; white-space: nowrap;">根目录</button>
             </div>
-            <select id="alistAccount"></select>
-            <div class="grid3">
-              <input id="alistPath" value="/百度网盘/SYY/心灵奇旅（2020）中英双语 外挂中英字幕 4K HDR" placeholder="目录路径">
-              <button id="btnAlistList">打开</button>
-              <button id="btnAlistUp" class="secondary">上级</button>
+            
+            <div class="grid3" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px;">
+              <input id="alistPath" value="/百度网盘/SYY/心灵奇旅（2020）中英双语 外挂中英字幕 4K HDR" placeholder="目录路径" style="height: 38px; border-radius: 8px;">
+              <button id="btnAlistList" style="height: 38px; border-radius: 8px;">打开</button>
+              <button id="btnAlistUp" class="secondary" style="height: 38px; border-radius: 8px;">上级</button>
             </div>
             <div id="alistList" class="resource-list"></div>
           </div>
@@ -3668,6 +3707,13 @@
       }
     };
 
+    $('btnAlistToggleLogin').onclick = () => {
+      const fields = $('alistLoginFields');
+      const arrow = $('alistToggleArrow');
+      const isHidden = fields.classList.toggle('hidden');
+      arrow.textContent = isHidden ? '▼' : '▲';
+    };
+
     $('btnAlistLogin').onclick = async () => {
       try {
         const data = await api('/api/vendor/alist/login', {
@@ -3676,6 +3722,9 @@
         });
         await refreshVendors();
         $('alistAccount').value = data.id;
+        // Auto collapse login fields after successful login
+        $('alistLoginFields').classList.add('hidden');
+        $('alistToggleArrow').textContent = '▼';
         await renderAlist('/');
       } catch (err) {
         alert(err.message);
@@ -4168,6 +4217,12 @@
           return;
         }
         
+        // Dynamically update the header name based on the first room name, or default to "我的放映厅"
+        const header = $('pairedRoomsHeader');
+        if (header) {
+          header.textContent = rooms.length > 0 ? `🏠 ${rooms[0].room_name}` : '🏠 我的放映厅';
+        }
+
         rooms.forEach(room => {
           const card = document.createElement('div');
           card.className = 'room-card-item';
@@ -4175,15 +4230,12 @@
           const info = document.createElement('div');
           info.className = 'room-card-info';
           
-          const name = document.createElement('span');
-          name.className = 'room-card-name';
-          name.textContent = '🏠 ' + room.room_name;
-          
           const members = document.createElement('span');
           members.className = 'room-card-members';
-          members.textContent = `对等绑定设备数: ${room.member_count} 台`;
+          members.style.fontWeight = '700';
+          members.style.fontSize = '14px';
+          members.textContent = `👥 对等绑定设备数: ${room.member_count} 台`;
           
-          info.appendChild(name);
           info.appendChild(members);
           
           const btns = document.createElement('div');
@@ -4205,7 +4257,7 @@
           btnUnbind.onclick = () => unbindRoom(room.room_id, room.room_name);
           
           const btnEnter = document.createElement('button');
-          btnEnter.className = 'primary';
+          btnEnter.className = 'btn-nav-accent';
           btnEnter.textContent = '直达';
           btnEnter.onclick = () => {
             const url = new URL(window.location.href);
