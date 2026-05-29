@@ -197,9 +197,8 @@
     }
 
     .topbar {
-      display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(380px, 580px);
-      gap: 20px;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
     }
@@ -1843,11 +1842,6 @@
       <div class="brand">
         <h1>一起看电视吖</h1>
         <p>Cozy up for a movie.</p>
-      </div>
-      <div class="room-console">
-        <input id="roomInput" value="aaaa" placeholder="请输入房间号 (如 a1b2c3)" maxlength="24">
-        <button id="btnJoin">加入房间</button>
-        <button id="btnCreate" class="secondary">创建房间</button>
       </div>
     </header>
 
@@ -3570,18 +3564,6 @@
     }
 
     document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => switchTab(btn.dataset.tab));
-
-    $('btnCreate').onclick = async () => {
-      const data = await api('/api/create-room', { method: 'POST' });
-      $('roomInput').value = data.room;
-      connect(data.room);
-    };
-    $('btnJoin').onclick = () => {
-      const room = $('roomInput').value.trim();
-      if (!room) return alert('请输入房间号');
-      connect(room);
-    };
-    $('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnJoin').click(); });
 
     $('btnDirectPlay').onclick = async () => {
       const url = $('directUrl').value.trim();
