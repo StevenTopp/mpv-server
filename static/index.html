@@ -934,11 +934,649 @@
       font-size: 12px !important;
       border-radius: 6px !important;
     }
+    /* ==========================================================================
+       LOBBY & PAIRING CODE PREMIUM SYSTEM (FEAT-021)
+       ========================================================================== */
+    body.in-lobby .layout,
+    body.in-lobby .topbar,
+    body.in-lobby .theme-toggle-btn {
+      display: none !important;
+    }
+    body:not(.in-lobby) .lobby-view {
+      display: none !important;
+    }
+
+    .lobby-view {
+      animation: lobbyFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      width: min(1200px, calc(100% - 32px));
+      margin: 40px auto;
+    }
+
+    @keyframes lobbyFadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .lobby-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px dashed var(--surface-border);
+      position: relative;
+    }
+
+    .lobby-header .brand {
+      text-align: left;
+    }
+
+    .lobby-user-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-badge {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--surface-border);
+      border-radius: 99px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    :root.light-mode .user-badge {
+      color: #1f2937;
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    #btnLogoutLobby {
+      height: 36px;
+      padding: 0 14px;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .lobby-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .lobby-user-status {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+
+    .lobby-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 40px;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #a7b5f0 0%, #8d7cd2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 10px;
+      text-shadow: 0 4px 20px rgba(141, 124, 210, 0.15);
+    }
+
+    :root.light-mode .lobby-header h1 {
+      background: linear-gradient(135deg, #00b4a2 0%, #007e71 100%);
+      text-shadow: 0 4px 20px rgba(0, 180, 162, 0.1);
+    }
+
+    .lobby-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .lobby-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .lobby-panel {
+      border: 1px solid var(--surface-border);
+      background: var(--surface);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: var(--shadow);
+      border-radius: 20px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lobby-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    .lobby-panel h2 {
+      margin: 0 0 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      border-left: 4px solid #8d7cd2;
+      padding-left: 12px;
+      color: #fff;
+    }
+
+    :root.light-mode .lobby-panel h2 {
+      border-left-color: #009e8e;
+      color: #1f2937;
+    }
+
+    .lobby-actions-stack {
+      display: grid;
+      gap: 24px;
+    }
+
+    .action-card {
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease;
+    }
+
+    .action-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(141, 124, 210, 0.05);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    :root.light-mode .action-card:hover {
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin: 0 0 24px;
+      line-height: 1.6;
+    }
+
+    .w-full {
+      width: 100%;
+    }
+
+    .bind-input-group {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    .bind-input-group input {
+      letter-spacing: 2px;
+      font-weight: 700;
+      font-size: 16px;
+      text-align: center;
+      text-transform: uppercase;
+      font-family: 'Outfit', monospace;
+      border-color: var(--surface-border);
+    }
+
+    .bind-input-group input::placeholder {
+      letter-spacing: 0px;
+      font-weight: 500;
+      font-size: 14px;
+      text-transform: none;
+      font-family: inherit;
+    }
+
+    /* Paired Rooms List Cards */
+    .paired-rooms-list {
+      display: grid;
+      gap: 14px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .room-card-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      border: 1px solid var(--surface-border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.015);
+      transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .room-card-item:hover {
+      background: rgba(255, 255, 255, 0.035);
+      border-color: rgba(255, 255, 255, 0.12);
+      transform: translateX(4px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    :root.light-mode .room-card-item {
+      background: rgba(0, 0, 0, 0.01);
+    }
+    :root.light-mode .room-card-item:hover {
+      background: rgba(0, 0, 0, 0.025);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    .room-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .room-card-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    :root.light-mode .room-card-name {
+      color: #1f2937;
+    }
+
+    .room-card-members {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .room-card-btns {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .room-card-btns button {
+      height: 38px;
+      padding: 0 16px;
+      font-size: 13px;
+      border-radius: 9px;
+    }
+
+    /* Modal styles */
+    .pairing-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(2, 4, 8, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    .pairing-modal-card {
+      background: var(--surface-active);
+      border: 1px solid var(--surface-border);
+      border-radius: 24px;
+      width: min(460px, 90%);
+      padding: 32px;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      position: relative;
+      animation: modalScaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes modalScaleUp {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header h2 {
+      margin: 0 0 10px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      background: linear-gradient(135deg, #a7b5f0 0%, #8d7cd2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    :root.light-mode .modal-header h2 {
+      background: linear-gradient(135deg, #00b4a2 0%, #007e71 100%);
+    }
+
+    .modal-header p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .pairing-code-display {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 18px;
+      margin: 24px 0;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .pairing-code-display:hover {
+      background: rgba(0, 0, 0, 0.45);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    :root.light-mode .pairing-code-display {
+      background: rgba(0, 0, 0, 0.03);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    :root.light-mode .pairing-code-display:hover {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+
+    .pairing-code-display span {
+      font-family: 'Outfit', monospace;
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      color: #fff;
+    }
+
+    :root.light-mode .pairing-code-display span {
+      color: #1f2937;
+    }
+
+    .modal-tip {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 28px;
+    }
+
+    .modal-tip p {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin: 0;
+      text-align: left;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 50px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.7;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+    }
+
+    @media (max-width: 820px) {
+      .lobby-layout {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+    /* Login Screen styles */
+    body.in-login-screen .layout,
+    body.in-login-screen .topbar,
+    body.in-login-screen .lobby-view,
+    body.in-login-screen .theme-toggle-btn {
+      display: none !important;
+    }
+    body:not(.in-login-screen) .login-screen {
+      display: none !important;
+    }
+
+    .login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      animation: loginFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes loginFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+      border-radius: 24px;
+      width: min(440px, 95%);
+      padding: 36px;
+      position: relative;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .login-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 32px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #a7b5f0 0%, #8d7cd2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 8px;
+      text-shadow: 0 4px 15px rgba(141, 124, 210, 0.1);
+    }
+
+    :root.light-mode .login-header h1 {
+      background: linear-gradient(135deg, #00b4a2 0%, #007e71 100%);
+    }
+
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      margin-bottom: 24px;
+    }
+
+    .auth-tab {
+      height: 38px;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      box-shadow: none !important;
+    }
+
+    .auth-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.02);
+      transform: none !important;
+    }
+
+    .auth-tab.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px rgba(117, 130, 195, 0.15) !important;
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 18px;
+    }
+
+    .input-field-group {
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .input-field-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding-left: 2px;
+    }
+
+    .input-field-group input {
+      height: 44px;
+      font-size: 14px;
+      border-color: var(--surface-border);
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .auth-error {
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
   <div class="app">
+    <!-- Login / Registration Screen -->
+    <div id="loginScreen" class="login-screen">
+      <div class="login-card">
+        <header class="login-header">
+          <h1>一起看电视吖</h1>
+          <p>Cozy up for a movie · 私人专属放映厅门禁</p>
+        </header>
+        
+        <div class="auth-tabs">
+          <button id="tabLoginBtn" class="auth-tab active" onclick="switchAuthTab('login')">立即登录</button>
+          <button id="tabRegisterBtn" class="auth-tab" onclick="switchAuthTab('register')">注册账号</button>
+        </div>
+
+        <form id="authForm" onsubmit="handleAuthSubmit(event)" class="auth-form">
+          <div class="input-field-group">
+            <label for="authUsername">用户名</label>
+            <input type="text" id="authUsername" placeholder="请输入用户名" required minlength="3" maxlength="20">
+          </div>
+          
+          <div class="input-field-group">
+            <label for="authPassword">密码</label>
+            <input type="password" id="authPassword" placeholder="请输入密码 (不少于6位)" required minlength="6">
+          </div>
+
+          <div id="authErrorMsg" class="auth-error hidden">用户名或密码错误</div>
+          
+          <button type="submit" id="btnAuthSubmit" class="primary w-full">立即登录</button>
+        </form>
+      </div>
+    </div>
+    <!-- Lobby View -->
+    <div id="lobbyView" class="lobby-view">
+      <header class="lobby-header">
+        <div class="brand">
+          <h1>我的私人影院</h1>
+          <p>一次绑定，多端直达，专属加密对等放映厅</p>
+        </div>
+        <div class="lobby-user-status">
+          <span class="user-badge">👤 <span id="lobbyUsername">Username</span></span>
+          <button id="btnLogoutLobby" class="secondary danger">退出登录</button>
+        </div>
+      </header>
+
+      <div class="lobby-layout">
+        <!-- Left: Paired Rooms List -->
+        <section class="lobby-panel rooms-section">
+          <h2>🏠 我的专属放映厅</h2>
+          <div id="pairedRoomsList" class="paired-rooms-list">
+            <!-- Dynamic list -->
+          </div>
+        </section>
+
+        <!-- Right: Actions -->
+        <div class="lobby-actions-stack">
+          <section class="lobby-panel action-card create-card">
+            <h2>✨ 创建新放映厅</h2>
+            <p class="card-desc">生成一次性 6 位数配对码，邀请伙伴绑定加入。</p>
+            <button id="btnCreateLobby" class="primary w-full">创建专属放映厅</button>
+          </section>
+
+          <section class="lobby-panel action-card bind-card">
+            <h2>🔗 绑定已有放映厅</h2>
+            <p class="card-desc">输入伙伴发给您的 6 位数一次性配对码进行双向绑定。</p>
+            <div class="bind-input-group">
+              <input id="lobbyCodeInput" placeholder="输入 6 位配对码" maxlength="8">
+              <button id="btnBindLobby" class="primary">绑定并加入</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pairing Success Modal -->
+    <div id="pairingModal" class="pairing-modal-overlay hidden">
+      <div class="pairing-modal-card">
+        <div class="modal-header">
+          <h2>🎉 专属放映厅创建成功！</h2>
+          <p>请将下方的一次性配对码发送给您的伙伴：</p>
+        </div>
+        <div class="pairing-code-display" onclick="navigator.clipboard.writeText($('pairingCodeVal').textContent.replace(' ', '')).then(() => alert('配对码已复制到剪贴板！'))">
+          <span id="pairingCodeVal">872 615</span>
+        </div>
+        <div class="modal-tip">
+          <p>⚠️ 提示：配对码有效期为 10 分钟。伙伴输入并绑定后，该码将失效，并且此后双方打开 App 即可在专属列表内直达该影厅。</p>
+        </div>
+        <div class="modal-footer">
+          <button id="btnConfirmPairing" class="primary w-full">确认并进入影厅</button>
+        </div>
+      </div>
+    </div>
     <header class="topbar">
       <div class="brand">
         <h1>一起看电视吖</h1>
@@ -974,6 +1612,7 @@
           <div style="display: flex; gap: 8px;">
             <button id="btnReady" disabled>我已就绪</button>
             <button id="btnSpeed" class="secondary">1.0X</button>
+            <button id="btnLeaveRoom" class="secondary danger">返回大厅</button>
           </div>
           <div class="status-stack">
             <span class="pill"><span class="dot" id="connDot"></span><span id="connText">未连接</span></span>
@@ -1293,6 +1932,8 @@
     }
 
     function getClientId() {
+      const verifiedId = localStorage.getItem('synctv_user_client_id');
+      if (verifiedId) return verifiedId;
       try {
         let id = localStorage.getItem(CLIENT_ID_KEY);
         if (!id) {
@@ -1525,17 +2166,26 @@
       }
       closingForLeave = false;
       roomID = room;
+      localStorage.setItem('synctv_last_room_id', roomID);
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${proto}//${location.host}/ws?room=${encodeURIComponent(roomID)}&client_id=${encodeURIComponent(getClientId())}`);
+      const token = localStorage.getItem('synctv_user_token') || '';
+      ws = new WebSocket(`${proto}//${location.host}/ws?room=${encodeURIComponent(roomID)}&client_id=${encodeURIComponent(getClientId())}&token=${encodeURIComponent(token)}`);
       ws.onopen = () => {
         setConnected(true);
-        $('roomLabel').textContent = `房间 ${roomID}`;
+        if (!roomID.startsWith('pair_')) {
+          $('roomLabel').textContent = `房间 ${roomID}`;
+        }
         log(options.reconnect ? `已重新连接房间 ${roomID}` : `已进入房间 ${roomID}`);
         startDriftCheck();
         updateRoomStats();
       };
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setConnected(false);
+        if (event && event.code === 4003) {
+          alert("您没有加入此专属放映厅的权限！");
+          leaveRoom();
+          return;
+        }
         log(closingForLeave
           ? '已退出房间'
           : (persistentClientEnabled() ? '房间连接断开，保留房间席位并等待重连' : '房间连接断开'));
@@ -1573,10 +2223,20 @@
       switch (msg.type) {
         case 'welcome':
           myUserId = msg.userId;
-          $('roomLabel').textContent = `房间 ${msg.room}`;
+          if (msg.roomName) {
+            $('roomLabel').textContent = "🏠 " + msg.roomName;
+          } else {
+            $('roomLabel').textContent = `房间 ${msg.room}`;
+          }
           if (msg.source && msg.source.kind === 'remote') loadRemoteSource(msg.source);
           if (msg.source && msg.source.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
           renderDanmakuHistory(msg.danmaku || []);
+          break;
+        case 'room-rename':
+          if (msg.room_id === roomID) {
+            $('roomLabel').textContent = "🏠 " + msg.room_name;
+            log(`放映厅被重命名为: ${msg.room_name}`);
+          }
           break;
         case 'user-join':
           log('有人加入房间');
@@ -3210,7 +3870,418 @@
       }
     };
 
+    // ==========================================================================
+    // LOBBY & PAIRING CODE PREMIUM SYSTEM JS LOGIC (FEAT-021)
+    // ==========================================================================
+    async function renderPairedRooms() {
+      const listContainer = $('pairedRoomsList');
+      if (!listContainer) return;
+      
+      listContainer.innerHTML = '<div class="muted" style="text-align:center; padding: 20px;">正在加载我的私人放映厅...</div>';
+      
+      try {
+        const data = await api('/api/rooms/list', {
+          method: 'POST',
+          body: { 
+            client_id: getClientId(),
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        
+        listContainer.innerHTML = '';
+        const rooms = data.rooms || [];
+        
+        if (rooms.length === 0) {
+          listContainer.innerHTML = `
+            <div class="empty-state">
+              <span class="empty-icon">🏠</span>
+              <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px; color: #fff;">暂无绑定的专属放映厅</div>
+              <div style="font-size:13px; opacity:0.8;">创建一个或使用配对码绑定对方的吧！</div>
+            </div>
+          `;
+          return;
+        }
+        
+        rooms.forEach(room => {
+          const card = document.createElement('div');
+          card.className = 'room-card-item';
+          
+          const info = document.createElement('div');
+          info.className = 'room-card-info';
+          
+          const name = document.createElement('span');
+          name.className = 'room-card-name';
+          name.textContent = '🏠 ' + room.room_name;
+          
+          const members = document.createElement('span');
+          members.className = 'room-card-members';
+          members.textContent = `对等绑定设备数: ${room.member_count} 台`;
+          
+          info.appendChild(name);
+          info.appendChild(members);
+          
+          const btns = document.createElement('div');
+          btns.className = 'room-card-btns';
+          
+          const btnInvite = document.createElement('button');
+          btnInvite.className = 'secondary';
+          btnInvite.textContent = '邀请';
+          btnInvite.onclick = () => inviteToRoom(room.room_id, room.room_name);
+          
+          const btnRename = document.createElement('button');
+          btnRename.className = 'secondary';
+          btnRename.textContent = '改名';
+          btnRename.onclick = () => renameRoom(room.room_id, room.room_name);
+
+          const btnUnbind = document.createElement('button');
+          btnUnbind.className = 'secondary danger';
+          btnUnbind.textContent = '解绑';
+          btnUnbind.onclick = () => unbindRoom(room.room_id, room.room_name);
+          
+          const btnEnter = document.createElement('button');
+          btnEnter.className = 'primary';
+          btnEnter.textContent = '直达';
+          btnEnter.onclick = () => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', room.room_id);
+            window.history.pushState({}, '', url);
+            document.body.classList.remove('in-lobby');
+            connect(room.room_id);
+          };
+          
+          btns.appendChild(btnInvite);
+          btns.appendChild(btnRename);
+          btns.appendChild(btnUnbind);
+          btns.appendChild(btnEnter);
+          
+          card.appendChild(info);
+          card.appendChild(btns);
+          listContainer.appendChild(card);
+        });
+      } catch (err) {
+        listContainer.innerHTML = `<div class="muted" style="text-align:center; padding: 20px; color: var(--danger);">加载失败: ${err.message}</div>`;
+      }
+    }
+
+    async function inviteToRoom(roomId, roomName) {
+      try {
+        const data = await api('/api/rooms/code', {
+          method: 'POST',
+          body: {
+            room_id: roomId,
+            client_id: getClientId(),
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        
+        // Show Pairing Modal
+        const codeDisplay = data.code.replace(/(.{3})/, '$1 ');
+        $('pairingCodeVal').textContent = codeDisplay;
+        
+        // Set modal title dynamically to show which room we are inviting to
+        const modalHeader = document.querySelector('#pairingModal .modal-header h2');
+        if (modalHeader) {
+          modalHeader.textContent = `🎉 邀请加入 "${roomName}"`;
+        }
+        
+        $('pairingModal').classList.remove('hidden');
+        $('btnConfirmPairing').dataset.roomId = roomId;
+      } catch (err) {
+        alert(`生成邀请码失败: ${err.message}`);
+      }
+    }
+
+    async function unbindRoom(roomId, roomName) {
+      const confirmMsg = `您确定要解绑放映厅 "${roomName}" 吗？\n\n解绑后您将退出此放映厅，如果想重新加入，必须让厅内其他成员重新生成配对码对您进行绑定。`;
+      if (!confirm(confirmMsg)) return;
+      
+      try {
+        await api('/api/rooms/unbind', {
+          method: 'POST',
+          body: {
+            room_id: roomId,
+            client_id: getClientId(),
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        log(`成功解绑并退出放映厅: ${roomName}`);
+        renderPairedRooms();
+      } catch (err) {
+        alert(`解绑失败: ${err.message}`);
+      }
+    }
+
+    async function renameRoom(roomId, currentName) {
+      const newName = prompt('请输入放映厅新名称：', currentName);
+      if (newName === null) return;
+      const cleanName = newName.trim();
+      if (!cleanName) return alert('名称不能为空');
+      
+      try {
+        await api('/api/rooms/rename', {
+          method: 'POST',
+          body: {
+            room_id: roomId,
+            new_name: cleanName,
+            client_id: getClientId(),
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        log(`成功修改放映厅名称为: ${cleanName}`);
+        renderPairedRooms();
+      } catch (err) {
+        alert(`改名失败: ${err.message}`);
+      }
+    }
+
+    function leaveRoom() {
+      closingForLeave = true;
+      roomID = '';
+      localStorage.removeItem('synctv_last_room_id');
+      if (ws) {
+        try {
+          ws.send(JSON.stringify({ type: 'leave', clientTs: Date.now() / 1000 }));
+        } catch(e) {}
+        ws.close();
+        ws = null;
+      }
+      
+      // Update URL parameters (remove room)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('room');
+      window.history.pushState({}, '', url);
+      
+      document.body.classList.add('in-lobby');
+      $('roomLabel').textContent = "未进入房间";
+      setConnected(false);
+      
+      // Reset player and sources to a clean state
+      player.pause();
+      player.removeAttribute('src');
+      delete player.dataset.hasSource;
+      if (localObjectUrl) {
+        URL.revokeObjectURL(localObjectUrl);
+        localObjectUrl = '';
+      }
+      updateVideoEmpty();
+      setSourceMeta(null);
+      resetReady();
+      
+      renderPairedRooms();
+    }
+
+    $('btnLeaveRoom').onclick = () => {
+      leaveRoom();
+    };
+
+    $('btnCreateLobby').onclick = async () => {
+      try {
+        const btn = $('btnCreateLobby');
+        btn.disabled = true;
+        btn.textContent = '正在创建...';
+        
+        const data = await api('/api/rooms/create', {
+          method: 'POST',
+          body: { 
+            client_id: getClientId(),
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        
+        btn.disabled = false;
+        btn.textContent = '创建专属放映厅';
+        
+        // Show Pairing Modal
+        const codeDisplay = data.code.replace(/(.{3})/, '$1 ');
+        $('pairingCodeVal').textContent = codeDisplay;
+        
+        // Reset modal title to default
+        const modalHeader = document.querySelector('#pairingModal .modal-header h2');
+        if (modalHeader) {
+          modalHeader.textContent = "🎉 专属放映厅创建成功！";
+        }
+        
+        $('pairingModal').classList.remove('hidden');
+        
+        // Set the active room ID on the confirm button
+        $('btnConfirmPairing').dataset.roomId = data.room_id;
+      } catch (err) {
+        $('btnCreateLobby').disabled = false;
+        $('btnCreateLobby').textContent = '创建专属放映厅';
+        alert(`创建放映厅失败: ${err.message}`);
+      }
+    };
+
+    $('btnConfirmPairing').onclick = () => {
+      const roomId = $('btnConfirmPairing').dataset.roomId;
+      $('pairingModal').classList.add('hidden');
+      if (roomId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', roomId);
+        window.history.pushState({}, '', url);
+        document.body.classList.remove('in-lobby');
+        connect(roomId);
+      }
+    };
+
+    $('btnBindLobby').onclick = async () => {
+      const codeInput = $('lobbyCodeInput');
+      const code = codeInput.value.trim();
+      if (!code) return alert('请输入 6 位配对码');
+      
+      try {
+        const btn = $('btnBindLobby');
+        btn.disabled = true;
+        btn.textContent = '正在绑定...';
+        
+        const data = await api('/api/rooms/bind', {
+          method: 'POST',
+          body: {
+            client_id: getClientId(),
+            code: code,
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        
+        btn.disabled = false;
+        btn.textContent = '绑定并加入';
+        codeInput.value = '';
+        
+        log(`成功绑定专属放映厅: ${data.room_name}`);
+        
+        // Join immediately
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', data.room_id);
+        window.history.pushState({}, '', url);
+        document.body.classList.remove('in-lobby');
+        connect(data.room_id);
+      } catch (err) {
+        $('btnBindLobby').disabled = false;
+        $('btnBindLobby').textContent = '绑定并加入';
+        alert(`绑定失败: ${err.message}`);
+      }
+    };
+    
+    $('lobbyCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnBindLobby').click(); });
+
+    // ==========================================================================
+    // MANDATORY USER LOGIN & REGISTRATION JS LOGIC (FEAT-021)
+    // ==========================================================================
+    let authMode = 'login';
+    function switchAuthTab(mode) {
+      authMode = mode;
+      $('tabLoginBtn').classList.toggle('active', mode === 'login');
+      $('tabRegisterBtn').classList.toggle('active', mode === 'register');
+      $('btnAuthSubmit').textContent = mode === 'login' ? '立即登录' : '注册新账号';
+      $('authErrorMsg').classList.add('hidden');
+    }
+
+    async function handleAuthSubmit(event) {
+      event.preventDefault();
+      const username = $('authUsername').value.trim();
+      const password = $('authPassword').value;
+      const errorMsg = $('authErrorMsg');
+      const submitBtn = $('btnAuthSubmit');
+      
+      errorMsg.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = authMode === 'login' ? '正在登录...' : '正在注册...';
+      
+      const apiPath = authMode === 'login' ? '/api/user/login' : '/api/user/register';
+      
+      try {
+        const data = await api(apiPath, {
+          method: 'POST',
+          body: { username, password }
+        });
+        
+        // Store credentials in LocalStorage
+        localStorage.setItem('synctv_user_username', data.username);
+        localStorage.setItem('synctv_user_token', data.token);
+        localStorage.setItem('synctv_user_client_id', data.client_id);
+        
+        $('lobbyUsername').textContent = data.username;
+        
+        // Remove login screen and initialize lobby
+        document.body.classList.remove('in-login-screen');
+        submitBtn.disabled = false;
+        submitBtn.textContent = authMode === 'login' ? '立即登录' : '注册新账号';
+        
+        log(`欢迎回来, ${data.username}! 门禁校验成功。`);
+        
+        // Check URL parameter to see if we go directly to a cinema or show the lobby
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryRoom = urlParams.get('room');
+        if (queryRoom) {
+          document.body.classList.remove('in-lobby');
+          connect(queryRoom);
+        } else {
+          // Check if there is a last room saved in LocalStorage
+          const lastRoom = localStorage.getItem('synctv_last_room_id');
+          if (lastRoom) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', lastRoom);
+            window.history.replaceState({}, '', url);
+            document.body.classList.remove('in-lobby');
+            connect(lastRoom);
+          } else {
+            document.body.classList.add('in-lobby');
+            renderPairedRooms();
+          }
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = authMode === 'login' ? '立即登录' : '注册新账号';
+        errorMsg.textContent = err.message || '系统繁忙，请稍后再试';
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('synctv_user_username');
+      localStorage.removeItem('synctv_user_token');
+      localStorage.removeItem('synctv_user_client_id');
+      localStorage.removeItem('synctv_last_room_id');
+      roomID = '';
+      if (ws) {
+        try {
+          ws.send(JSON.stringify({ type: 'leave', clientTs: Date.now() / 1000 }));
+        } catch (e) {}
+        ws.close();
+        ws = null;
+      }
+      
+      // Update URL parameters (remove room)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('room');
+      window.history.pushState({}, '', url);
+
+      player.pause();
+      player.removeAttribute('src');
+      delete player.dataset.hasSource;
+      if (localObjectUrl) {
+        URL.revokeObjectURL(localObjectUrl);
+        localObjectUrl = '';
+      }
+      updateVideoEmpty();
+      setSourceMeta(null);
+      resetReady();
+      document.body.classList.add('in-login-screen');
+    }
+
+    $('btnLogoutLobby').onclick = logout;
+
     function init() {
+      // Check login status first
+      const token = localStorage.getItem('synctv_user_token');
+      const verifiedClientId = localStorage.getItem('synctv_user_client_id');
+      if (!token || !verifiedClientId) {
+        document.body.classList.add('in-login-screen');
+        return;
+      }
+      document.body.classList.remove('in-login-screen');
+      $('lobbyUsername').textContent = localStorage.getItem('synctv_user_username') || '用户';
+
       if (window.AndroidBridge && window.AndroidBridge.getDownloadPath) {
         try {
           const path = window.AndroidBridge.getDownloadPath();
@@ -3225,9 +4296,25 @@
       updateVideoEmpty();
       updateRoomStats();
 
-      // 房间连接立即发起，不等 vendor 状态
-      if ($('roomInput').value) {
-        connect($('roomInput').value);
+      // 房间连接立即发起，通过 URL 参数判断是直连影厅还是进入大厅
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryRoom = urlParams.get('room');
+      if (queryRoom) {
+        document.body.classList.remove('in-lobby');
+        connect(queryRoom);
+      } else {
+        // Check if there is a last room saved in LocalStorage
+        const lastRoom = localStorage.getItem('synctv_last_room_id');
+        if (lastRoom) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('room', lastRoom);
+          window.history.replaceState({}, '', url);
+          document.body.classList.remove('in-lobby');
+          connect(lastRoom);
+        } else {
+          document.body.classList.add('in-lobby');
+          renderPairedRooms();
+        }
       }
 
       // vendor 状态异步加载，完全不阻塞房间连接

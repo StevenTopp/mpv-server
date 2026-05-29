@@ -140,10 +140,29 @@ async def ws_endpoint(websocket: WebSocket):
         await websocket.close(code=4000)
         return
 
+    client_id_param = (websocket.query_params.get("client_id") or "").strip()
+    token_param = (websocket.query_params.get("token") or "").strip()
+
+    # 1. 拦截未授权设备进入私密对等放映厅
+    if room_id.startswith("pair_"):
+        from core.users import verify_token
+        if not verify_token(client_id_param, token_param):
+            await websocket.accept()
+            logger.warning(f"WS token verification failed: client={client_id_param}")
+            await websocket.close(code=4003)
+            return
+
+        from core.pairs import get_paired_room
+        paired_room = get_paired_room(room_id)
+        if not paired_room or client_id_param not in paired_room.get("member_client_ids", []):
+            await websocket.accept()
+            logger.warning(f"Unauthorized WS join blocked: room={room_id} client={client_id_param}")
+            await websocket.close(code=4003)
+            return
+
     await websocket.accept()
     room = rooms.setdefault(room_id, Room(room_id=room_id))
     prune_room_members(room)
-    client_id_param = (websocket.query_params.get("client_id") or "").strip()
     sticky_member = CLIENT_ID_ENABLED and bool(CLIENT_ID_RE.match(client_id_param))
     user_id = normalize_client_id(client_id_param) if sticky_member else gen_room_id()
     previous_client = room.clients.get(user_id) if sticky_member else None
@@ -168,18 +187,24 @@ async def ws_endpoint(websocket: WebSocket):
         was_member,
     )
 
-    await send_json(
-        websocket,
-        {
-            "type": "welcome",
-            "userId": user_id,
-            "reconnected": was_member,
-            "stickyMember": sticky_member,
-            "memberGraceSeconds": ROOM_MEMBER_GRACE_SECONDS,
-            "serverSeq": next_room_seq(room),
-            **public_room(room),
-        },
-    )
+    welcome_payload = {
+        "type": "welcome",
+        "userId": user_id,
+        "reconnected": was_member,
+        "stickyMember": sticky_member,
+        "memberGraceSeconds": ROOM_MEMBER_GRACE_SECONDS,
+        "serverSeq": next_room_seq(room),
+        **public_room(room),
+    }
+
+    # 动态附加专属放映厅名称
+    if room_id.startswith("pair_"):
+        from core.pairs import get_paired_room
+        p_room = get_paired_room(room_id)
+        if p_room:
+            welcome_payload["roomName"] = p_room.get("room_name", "专属放映厅")
+
+    await send_json(websocket, welcome_payload)
     await broadcast(
         room,
         {

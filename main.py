@@ -17,6 +17,8 @@ from core.rooms import Room, rooms, gen_room_id
 from core.websocket import router as ws_router
 from vendors.alist import router as alist_router
 from vendors.bilibili import router as bilibili_router
+from core.pairs import get_rooms_for_client, create_paired_room, bind_client_to_room, rename_paired_room, unbind_client_from_room, get_or_create_pair_code_for_room
+from core.users import register_user, login_user, verify_token
 
 # Setup Logging
 logging.basicConfig(
@@ -58,6 +60,39 @@ class SubtitleUploadReq(BaseModel):
 class ClientLogReq(BaseModel):
     level: str = "info"
     message: str
+
+class RoomsListReq(BaseModel):
+    client_id: str
+    token: str
+
+class RoomCreateReq(BaseModel):
+    client_id: str
+    token: str
+
+class RoomBindReq(BaseModel):
+    client_id: str
+    code: str
+    token: str
+
+class RoomRenameReq(BaseModel):
+    room_id: str
+    new_name: str
+    client_id: str
+    token: str
+
+class RoomUnbindReq(BaseModel):
+    room_id: str
+    client_id: str
+    token: str
+
+class RoomCodeReq(BaseModel):
+    room_id: str
+    client_id: str
+    token: str
+
+class UserAuthReq(BaseModel):
+    username: str
+    password: str
 
 @app.post("/api/upload-subtitle")
 async def upload_subtitle(req: SubtitleUploadReq):
@@ -110,6 +145,130 @@ async def create_room():
     rooms[room_id] = Room(room_id=room_id)
     logger.info(f"Created new room: {room_id}")
     return {"room": room_id}
+
+@app.post("/api/rooms/list")
+async def rooms_list(req: RoomsListReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        res = get_rooms_for_client(req.client_id)
+        return {"rooms": res}
+    except Exception as e:
+        logger.error(f"Error listing rooms: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/create")
+async def rooms_create(req: RoomCreateReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        room_id, room_name, code = create_paired_room(req.client_id)
+        # Also initialize the Room object in the global active rooms mapping
+        if room_id not in rooms:
+            rooms[room_id] = Room(room_id=room_id)
+        return {"room_id": room_id, "room_name": room_name, "code": code}
+    except Exception as e:
+        logger.error(f"Error creating paired room: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/bind")
+async def rooms_bind(req: RoomBindReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        success, error_msg, room_id, room_name = bind_client_to_room(req.code, req.client_id)
+        if not success:
+            raise HTTPException(status_code=400, detail=error_msg)
+        # Ensure Room object exists in active rooms
+        if room_id not in rooms:
+            rooms[room_id] = Room(room_id=room_id)
+        return {"room_id": room_id, "room_name": room_name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error binding room: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/rename")
+async def rooms_rename(req: RoomRenameReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        success = rename_paired_room(req.room_id, req.new_name, req.client_id)
+        if not success:
+            raise HTTPException(status_code=400, detail="改名失败：未找到放映厅或您没有权限")
+        
+        # Broadcast the rename event to all connected websocket clients in this room
+        from core.rooms import broadcast
+        room = rooms.get(req.room_id)
+        if room:
+            await broadcast(room, {
+                "type": "room-rename",
+                "room_id": req.room_id,
+                "room_name": req.new_name.strip()
+              })
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error renaming room: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/unbind")
+async def rooms_unbind_post(req: RoomUnbindReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        success = unbind_client_from_room(req.room_id, req.client_id)
+        if not success:
+            raise HTTPException(status_code=400, detail="解绑失败：放映厅不存在或您并非成员")
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unbinding room: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/code")
+async def rooms_code(req: RoomCodeReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        code = get_or_create_pair_code_for_room(req.room_id, req.client_id)
+        if not code:
+            raise HTTPException(status_code=400, detail="获取配对码失败：放映厅不存在或您没有权限")
+        return {"code": code}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating invite code: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/user/register")
+async def user_register(req: UserAuthReq):
+    try:
+        success, error_msg, client_id, token = register_user(req.username, req.password)
+        if not success:
+            raise HTTPException(status_code=400, detail=error_msg)
+        return {"success": True, "client_id": client_id, "token": token, "username": req.username}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error registering user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/user/login")
+async def user_login(req: UserAuthReq):
+    try:
+        success, error_msg, client_id, token = login_user(req.username, req.password)
+        if not success:
+            raise HTTPException(status_code=400, detail=error_msg)
+        return {"success": True, "client_id": client_id, "token": token, "username": req.username}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error logging in user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/vendors/status")
 async def vendor_status():
