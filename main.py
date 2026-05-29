@@ -19,6 +19,8 @@ from vendors.alist import router as alist_router
 from vendors.bilibili import router as bilibili_router
 from core.pairs import get_rooms_for_client, create_paired_room, bind_client_to_room, rename_paired_room, unbind_client_from_room, get_or_create_pair_code_for_room
 from core.users import register_user, login_user, verify_token
+from core.notes import get_room_whispers, update_room_whisper
+
 
 # Setup Logging
 logging.basicConfig(
@@ -89,6 +91,18 @@ class RoomCodeReq(BaseModel):
     room_id: str
     client_id: str
     token: str
+
+class RoomWhispersGetReq(BaseModel):
+    room_id: str
+    client_id: str
+    token: str
+
+class RoomWhispersSaveReq(BaseModel):
+    room_id: str
+    client_id: str
+    content: str
+    token: str
+
 
 class UserAuthReq(BaseModel):
     username: str
@@ -243,6 +257,64 @@ async def rooms_code(req: RoomCodeReq):
     except Exception as e:
         logger.error(f"Error generating invite code: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/wall/get")
+async def api_get_room_wall(req: RoomWhispersGetReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        from core.pairs import get_paired_room
+        p_room = get_paired_room(req.room_id)
+        if not p_room or req.client_id not in p_room.get("member_client_ids", []):
+            raise HTTPException(status_code=403, detail="您并非该专属放映厅成员")
+            
+        data = get_room_whispers(req.room_id, p_room.get("member_client_ids", []))
+        return data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting whispers wall: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/rooms/wall/save")
+async def api_save_room_wall(req: RoomWhispersSaveReq):
+    if not verify_token(req.client_id, req.token):
+        raise HTTPException(status_code=401, detail="您的会话已过期，请重新登录")
+    try:
+        from core.pairs import get_paired_room
+        p_room = get_paired_room(req.room_id)
+        if not p_room or req.client_id not in p_room.get("member_client_ids", []):
+            raise HTTPException(status_code=403, detail="您并非该专属放映厅成员")
+            
+        from core.users import get_username_by_client_id
+        username = get_username_by_client_id(req.client_id)
+        
+        # Save note updates
+        data = update_room_whisper(
+            room_id=req.room_id,
+            member_client_ids=p_room.get("member_client_ids", []),
+            client_id=req.client_id,
+            content=req.content,
+            updated_by_username=username
+        )
+        
+        # Broadcast the updated whispers board to all WebSocket clients connected to the room
+        from core.rooms import broadcast
+        room = rooms.get(req.room_id)
+        if room:
+            await broadcast(room, {
+                "type": "wall",
+                "room": req.room_id,
+                "wall": data
+            })
+            
+        return {"success": True, "wall": data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving whispers: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/user/register")
 async def user_register(req: UserAuthReq):

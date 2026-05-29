@@ -197,12 +197,14 @@ async def ws_endpoint(websocket: WebSocket):
         **public_room(room),
     }
 
-    # 动态附加专属放映厅名称
+    # 动态附加专属放映厅名称与悄悄话留言
     if room_id.startswith("pair_"):
         from core.pairs import get_paired_room
         p_room = get_paired_room(room_id)
         if p_room:
             welcome_payload["roomName"] = p_room.get("room_name", "专属放映厅")
+            from core.notes import get_room_whispers
+            welcome_payload["wall"] = get_room_whispers(room_id, p_room.get("member_client_ids", []))
 
     await send_json(websocket, welcome_payload)
     await broadcast(

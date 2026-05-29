@@ -698,6 +698,246 @@
       transform: scale(0.95);
     }
 
+    /* Floating Cartoon Whispers Toggle Button */
+    .wall-toggle-btn {
+      position: fixed;
+      top: 20px;
+      right: 74px; /* Shifted 54px left from 20px (44px width + 10px gap) */
+      z-index: 1000;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      font-size: 20px;
+      transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+      backdrop-filter: blur(12px);
+    }
+    .wall-toggle-btn:hover {
+      transform: scale(1.1) rotate(10deg);
+      border-color: var(--accent-solid);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .wall-toggle-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Cozy Dynamic Virtual Corkboard Overlay (悄悄话便签板) */
+    .wall-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wall-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .wall-board {
+      width: min(850px, calc(100vw - 32px));
+      background: #3e2723; /* Dark Wood / Cork board in dark mode */
+      border: 8px solid #2d1910;
+      border-radius: 20px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+      padding: 30px;
+      position: relative;
+      animation: boardSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    @keyframes boardSlideIn {
+      from { transform: translateY(30px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    
+    /* Corkboard background variants for Light/Dark Mode */
+    :root.light-mode .wall-board {
+      background: #d7ccc8; /* Soft pale beige/canvas corkboard in Light Mode */
+      border-color: #8d6e63;
+      box-shadow: 0 20px 50px rgba(141, 110, 99, 0.35);
+    }
+    
+    .wall-board-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: #ffd180; /* Cute warm golden glow */
+      margin-bottom: 25px;
+      text-shadow: 0 4px 10px rgba(255, 209, 128, 0.2);
+    }
+    :root.light-mode .wall-board-title {
+      color: #4e342e;
+      text-shadow: none;
+    }
+    
+    .wall-notes-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+      width: 100%;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    
+    /* Individual Handwritten Sticky Notes */
+    .wall-note-card {
+      flex: 1;
+      min-width: 230px;
+      max-width: 280px;
+      height: 280px;
+      padding: 24px;
+      border-radius: 12px;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .wall-note-card:hover {
+      transform: scale(1.03) rotate(0deg) !important;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+    }
+    
+    /* alternations angles and colors */
+    .wall-note-card.note-pink {
+      background: linear-gradient(135deg, #ffd3e2 0%, #ffb7d2 100%);
+      color: #7d002a;
+    }
+    .wall-note-card.note-blue {
+      background: linear-gradient(135deg, #d2f0ff 0%, #a4e1ff 100%);
+      color: #004b7d;
+    }
+    .wall-note-card.note-purple {
+      background: linear-gradient(135deg, #ebd6ff 0%, #d8b2ff 100%);
+      color: #400080;
+    }
+    .wall-note-card.note-yellow {
+      background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%);
+      color: #5d4037;
+    }
+    
+    /* Cute heart pin at the top */
+    .wall-note-card::before {
+      content: '📍'; /* Cartoon pushpin */
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 22px;
+      filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.25));
+    }
+    
+    .wall-note-card-title {
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: left;
+      border-bottom: 1px dashed rgba(0, 0, 0, 0.15);
+      padding-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .wall-note-card-title .whisper-status {
+      font-size: 11px;
+      font-weight: normal;
+      opacity: 0.7;
+    }
+    
+    .wall-note-textarea {
+      flex: 1;
+      width: 100%;
+      background: transparent;
+      border: none;
+      resize: none;
+      outline: none;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: inherit;
+      padding: 0;
+    }
+    
+    /* Styled Scrollbar for Board */
+    .wall-notes-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .wall-notes-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .wall-notes-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 99px;
+    }
+    :root.light-mode .wall-notes-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Status banner on corkboard bottom */
+    .wall-board-footer {
+      width: 100%;
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .wall-save-status {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 500;
+    }
+    :root.light-mode .wall-save-status {
+      color: #5d4037;
+    }
+    
+    .wall-save-status.ok { color: #81c784; }
+    .wall-save-status.err { color: #e57373; }
+    .wall-save-status.inf { color: #64b5f6; }
+    
+    .btn-wall-close {
+      background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      padding: 10px 24px;
+      box-shadow: 0 5px 15px rgba(255, 95, 109, 0.3);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      font-size: 13px;
+    }
+    .btn-wall-close:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 20px rgba(255, 95, 109, 0.45);
+    }
+    .btn-wall-close:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+
     /* Day Mode (Light Mode) Color Overrides */
     :root.light-mode {
       --bg: #f8fafc;
@@ -939,7 +1179,8 @@
        ========================================================================== */
     body.in-lobby .layout,
     body.in-lobby .topbar,
-    body.in-lobby .theme-toggle-btn {
+    body.in-lobby .theme-toggle-btn,
+    body.in-lobby .wall-toggle-btn {
       display: none !important;
     }
     body:not(.in-lobby) .lobby-view {
@@ -1351,7 +1592,8 @@
     body.in-login-screen .layout,
     body.in-login-screen .topbar,
     body.in-login-screen .lobby-view,
-    body.in-login-screen .theme-toggle-btn {
+    body.in-login-screen .theme-toggle-btn,
+    body.in-login-screen .wall-toggle-btn {
       display: none !important;
     }
     body:not(.in-login-screen) .login-screen {
@@ -1577,6 +1819,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Cozy Dynamic Virtual Corkboard Overlay (悄悄话便签板) -->
+    <div id="wallOverlay" class="wall-overlay">
+      <div class="wall-board">
+        <div class="wall-board-title">💌 专属放映厅的悄悄话留言墙 📌</div>
+        <div id="wallNotesContainer" class="wall-notes-container">
+          <!-- Dynamic textareas and notes will be loaded here -->
+        </div>
+        <div class="wall-board-footer">
+          <div id="wallSaveStatus" class="wall-save-status">已从服务器载入最新内容</div>
+          <button id="btnWallClose" class="btn-wall-close">收起悄悄话</button>
+        </div>
+      </div>
+    </div>
     <header class="topbar">
       <div class="brand">
         <h1>一起看电视吖</h1>
@@ -1789,6 +2045,18 @@
             console.log("Failed to notify theme change via AndroidBridge:", e);
           }
         }
+      });
+
+      // Cute Cartoon Whispers Message Toggle Button
+      const wallToggle = document.createElement('button');
+      wallToggle.id = 'btnWallToggle';
+      wallToggle.className = 'wall-toggle-btn';
+      wallToggle.innerHTML = '💌';
+      wallToggle.title = '我的悄悄话留言墙';
+      document.body.appendChild(wallToggle);
+      
+      wallToggle.addEventListener('click', () => {
+        toggleWallOverlay();
       });
     })();
 
@@ -2231,11 +2499,21 @@
           if (msg.source && msg.source.kind === 'remote') loadRemoteSource(msg.source);
           if (msg.source && msg.source.subtitle) loadSubtitle(msg.source.subtitle, msg.source.subtitleTitle);
           renderDanmakuHistory(msg.danmaku || []);
+          if (msg.wall) {
+            wallLastSeq = msg.wall.seq || 0;
+            renderWallNotes(msg.wall);
+          }
           break;
         case 'room-rename':
           if (msg.room_id === roomID) {
             $('roomLabel').textContent = "🏠 " + msg.room_name;
             log(`放映厅被重命名为: ${msg.room_name}`);
+          }
+          break;
+        case 'wall':
+          if (msg.wall && msg.wall.seq >= wallLastSeq) {
+            wallLastSeq = msg.wall.seq;
+            renderWallNotes(msg.wall);
           }
           break;
         case 'user-join':
@@ -4270,6 +4548,168 @@
     }
 
     $('btnLogoutLobby').onclick = logout;
+
+    // ==========================================================================
+    // CARTOON WHISPERS (悄悄话便签墙) JS LOGIC
+    // ==========================================================================
+    let wallOverlayActive = false;
+    let wallDebounceTimer = null;
+    let wallLastSeq = 0;
+    let wallIsSaving = false;
+
+    function setWhisperStatus(msg, cls) {
+      const el = $('wallSaveStatus');
+      if (!el) return;
+      el.className = 'wall-save-status ' + (cls || '');
+      el.textContent = msg || '';
+    }
+
+    function toggleWallOverlay(force = null) {
+      const overlay = $('wallOverlay');
+      wallOverlayActive = (force !== null) ? force : !wallOverlayActive;
+      overlay.classList.toggle('active', wallOverlayActive);
+      
+      if (wallOverlayActive) {
+        loadWhispers(true);
+      } else {
+        if (wallDebounceTimer) {
+          clearTimeout(wallDebounceTimer);
+          wallDebounceTimer = null;
+        }
+        // Save immediately on close if there were pending changes
+        const selfArea = $('selfWhisperArea');
+        if (selfArea && !selfArea.readOnly) {
+          saveWhisperImmediately(selfArea.value);
+        }
+      }
+    }
+
+    $('btnWallClose').onclick = () => toggleWallOverlay(false);
+
+    function renderWallNotes(wallData) {
+      const container = $('wallNotesContainer');
+      container.innerHTML = '';
+      
+      if (!wallData || !wallData.notes || wallData.notes.length === 0) {
+        container.innerHTML = '<div style="color:rgba(255,255,255,0.6);font-size:14px;padding:40px;text-align:center;">这里静悄悄的，拉入小伙伴绑定以开启悄悄话功能吧 💌</div>';
+        return;
+      }
+      
+      const myClientId = localStorage.getItem('synctv_user_client_id');
+      
+      wallData.notes.forEach((note, idx) => {
+        const colorClass = ['note-pink', 'note-blue', 'note-purple'][note.color_index % 3];
+        const tilt = idx % 2 === 0 ? -1.5 : 1.2;
+        const isSelf = note.client_id === myClientId;
+        const label = `${note.username} 的悄悄话：`;
+        
+        const card = document.createElement('div');
+        card.className = `wall-note-card ${colorClass}`;
+        card.style.transform = `rotate(${tilt}deg)`;
+        
+        const title = document.createElement('div');
+        title.className = 'wall-note-card-title';
+        title.innerHTML = `<span>📝 ${label}</span> <span class="whisper-status">${isSelf ? '✍️ 可编辑' : '🔒 只读'}</span>`;
+        
+        const textarea = document.createElement('textarea');
+        textarea.className = 'wall-note-textarea';
+        textarea.placeholder = isSelf ? '写下你对 TA 的悄悄话...' : '这里什么都没有写，等待 TA 的悄悄话...';
+        textarea.value = note.content || '';
+        
+        if (!isSelf) {
+          textarea.readOnly = true;
+        } else {
+          textarea.id = 'selfWhisperArea';
+          textarea.addEventListener('input', () => {
+            scheduleWhisperSave(textarea.value);
+          });
+          textarea.addEventListener('blur', () => {
+            saveWhisperImmediately(textarea.value);
+          });
+        }
+        
+        card.appendChild(title);
+        card.appendChild(textarea);
+        container.appendChild(card);
+      });
+    }
+
+    function scheduleWhisperSave(content) {
+      setWhisperStatus('输入中，等待同步...', 'inf');
+      if (wallDebounceTimer) clearTimeout(wallDebounceTimer);
+      wallDebounceTimer = setTimeout(() => {
+        saveWhisperImmediately(content);
+      }, 1000);
+    }
+
+    async function saveWhisperImmediately(content) {
+      if (wallIsSaving) return;
+      if (!roomID || !roomID.startsWith('pair_')) return;
+      wallIsSaving = true;
+      setWhisperStatus('正在同步到服务器...', 'inf');
+      
+      try {
+        const data = await api('/api/rooms/wall/save', {
+          method: 'POST',
+          body: {
+            room_id: roomID,
+            client_id: localStorage.getItem('synctv_user_client_id'),
+            content: content,
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        
+        wallLastSeq = data.wall.seq;
+        setWhisperStatus('已保存并同步最新内容', 'ok');
+      } catch (err) {
+        setWhisperStatus(`同步失败: ${err.message}`, 'err');
+      } finally {
+        wallIsSaving = false;
+      }
+    }
+
+    async function loadWhispers(showInfo = false) {
+      if (!roomID || !roomID.startsWith('pair_')) {
+        renderWallNotes(null);
+        return;
+      }
+      if (showInfo) setWhisperStatus('正在载入悄悄话...', 'inf');
+      
+      try {
+        const data = await api('/api/rooms/wall/get', {
+          method: 'POST',
+          body: {
+            room_id: roomID,
+            client_id: localStorage.getItem('synctv_user_client_id'),
+            token: localStorage.getItem('synctv_user_token') || ''
+          }
+        });
+        
+        if (data.seq < wallLastSeq) {
+          if (showInfo) setWhisperStatus('内容已是最新', 'ok');
+          return;
+        }
+        
+        const active = document.activeElement;
+        const isEditingSelf = active && active.id === 'selfWhisperArea';
+        
+        wallLastSeq = data.seq;
+        renderWallNotes(data);
+        
+        if (isEditingSelf) {
+          const textarea = $('selfWhisperArea');
+          if (textarea) {
+            textarea.focus();
+            const len = textarea.value.length;
+            textarea.setSelectionRange(len, len);
+          }
+        }
+        
+        if (showInfo) setWhisperStatus('已从服务器载入最新内容', 'ok');
+      } catch (err) {
+        if (showInfo) setWhisperStatus(`载入失败: ${err.message}`, 'err');
+      }
+    }
 
     function init() {
       // Check login status first

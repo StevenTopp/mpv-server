@@ -147,3 +147,12 @@ def login_user(username: str, password: str) -> tuple[bool, str, str, str]:
     save_users()
     logger.info(f"Successfully logged in user: {username} -> client_id: {client_id}")
     return True, "", client_id, token
+
+def get_username_by_client_id(client_id: str) -> str:
+    if not client_id:
+        return "未知用户"
+    for user_info in _state["users"].values():
+        if user_info.get("client_id") == client_id:
+            return user_info.get("username", "未知用户")
+    return "未知用户"
+

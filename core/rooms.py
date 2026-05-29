@@ -39,6 +39,8 @@ class Room:
         "updatedAt": 0,
     })
     danmaku: list[dict[str, Any]] = field(default_factory=list)
+    wall: dict[str, Any] = field(default_factory=dict)
+
 
 # Global registry of active rooms
 rooms: dict[str, Room] = {}
