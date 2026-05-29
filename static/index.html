@@ -671,6 +671,27 @@
         min-height: 260px;
       }
 
+      /* Room Card Item Mobile Refinements (FEAT-022) */
+      .room-card-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 16px;
+      }
+      .room-card-btns {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .room-card-btns button {
+        padding: 0 !important;
+        font-size: 12px !important;
+        height: 36px !important;
+        width: 100% !important;
+        justify-content: center;
+        text-align: center;
+      }
     }
 
     /* Floating Theme Toggle Button */
@@ -4241,7 +4262,7 @@
           members.className = 'room-card-members';
           members.style.fontWeight = '700';
           members.style.fontSize = '14px';
-          members.textContent = `👥 对等绑定设备数: ${room.member_count} 台`;
+          members.textContent = `👥 绑定设备: ${room.member_count} 台`;
           
           info.appendChild(members);
           
