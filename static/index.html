@@ -2378,8 +2378,10 @@
       updateRoomStats();
     }
 
+    let currentSourceKind = 'none';
     function setSourceMeta(source) {
       const kind = (source && source.kind) || 'none';
+      currentSourceKind = kind;
       const title = (source && source.title) || (source && source.url) || '';
       let text = kind === 'none' ? '播放源未设置' : `${kind === 'local' ? '本地' : '远程'} · ${title}`;
       if (source && source.subtitle) {
@@ -3100,14 +3102,21 @@
       }
       const tolerance = (options.tolerance !== undefined && options.tolerance !== null) ? options.tolerance : 0.35;
       const seekDone = state.seeking === false;
-      // Use mockCurrentTime or state.timePos equivalent. Mocked player updates mockCurrentTime.
-      const timeReady = true; // currentTime is checked externally by scheduleSeekSyncReady
+      const isLocalSource = currentSourceKind === 'local';
       const hasVideoOutput = !!state.hasVideoOut;
-      const notCachePaused = state.pausedForCache !== true;
-      const cacheFillReady = state.cacheBufferingState == null || state.cacheBufferingState >= 100;
-      const notEof = state.eofReached !== true || options.allowEof === true;
-      const notBufferProbing = state.bufferProbing !== true;
-      const ready = seekDone && timeReady && hasVideoOutput && notCachePaused && cacheFillReady && notEof && notBufferProbing;
+
+      let ready;
+      if (isLocalSource) {
+        // 本地视频：seek 完成 + 有视频输出即可，不需要等缓存
+        ready = seekDone && hasVideoOutput;
+      } else {
+        // 远程视频：保持原有全部条件
+        const notCachePaused = state.pausedForCache !== true;
+        const cacheFillReady = state.cacheBufferingState == null || state.cacheBufferingState >= 100;
+        const notEof = state.eofReached !== true || options.allowEof === true;
+        const notBufferProbing = state.bufferProbing !== true;
+        ready = seekDone && hasVideoOutput && notCachePaused && cacheFillReady && notEof && notBufferProbing;
+      }
 
       if (options.logProbe) {
         const closeEnough = typeof options.closeEnough === 'boolean'
@@ -3119,6 +3128,7 @@
           currentTime: options.currentTime,
           closeEnough,
           isMocked: true,
+          isLocalSource,
           seeking: state.seeking,
           pausedForCache: state.pausedForCache,
           cacheBufferingState: state.cacheBufferingState,
@@ -3127,7 +3137,11 @@
           bufferProbing: state.bufferProbing,
           ready,
           stableCount: options.stableCount || 0,
-          reason: ready ? 'ready' : `seekDone:${seekDone},video:${hasVideoOutput},cachePaused:${!notCachePaused},cacheFill:${cacheFillReady},eofOk:${notEof},probing:${!notBufferProbing}`
+          reason: ready ? 'ready' : (
+            isLocalSource
+              ? `seekDone:${seekDone},video:${hasVideoOutput}`
+              : `seekDone:${seekDone},video:${hasVideoOutput},cachePaused:${!(state.pausedForCache !== true)},cacheFill:${!(state.cacheBufferingState == null || state.cacheBufferingState >= 100)},eofOk:${!(state.eofReached !== true)},probing:${!(state.bufferProbing !== true)}`
+          )
         });
       }
       return ready;
@@ -3220,6 +3234,7 @@
               currentTime: mpvCurrentTime,
               closeEnough,
               isMocked: true,
+              isLocalSource: currentSourceKind === 'local',
               seeking: player.mpvState && player.mpvState.seeking,
               pausedForCache: player.mpvState && player.mpvState.pausedForCache,
               cacheBufferingState: player.mpvState && player.mpvState.cacheBufferingState,
@@ -3240,7 +3255,7 @@
 
         if (isReady) {
           stableCount++;
-          const requiredTicks = window.AndroidBridge ? 3 : 2; 
+          const requiredTicks = currentSourceKind === 'local' ? 1 : (window.AndroidBridge ? 3 : 2);
           if (stableCount >= requiredTicks) {
             clearInterval(seekReadyTimer);
             seekReadyTimer = null;
