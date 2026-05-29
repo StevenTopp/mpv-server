@@ -1774,7 +1774,7 @@
         </div>
         <div class="lobby-user-status">
           <span class="user-badge">👤 <span id="lobbyUsername">Username</span></span>
-          <button id="btnLogoutLobby" class="secondary danger">退出登录</button>
+          <button id="btnLogoutLobby" class="secondary">退出登录</button>
         </div>
       </header>
 
@@ -1874,7 +1874,7 @@
           <div style="display: flex; gap: 8px;">
             <button id="btnReady" disabled>我已就绪</button>
             <button id="btnSpeed" class="secondary">1.0X</button>
-            <button id="btnLeaveRoom" class="secondary danger">返回大厅</button>
+            <button id="btnLeaveRoom" class="secondary">返回大厅</button>
           </div>
           <div class="status-stack">
             <span class="pill"><span class="dot" id="connDot"></span><span id="connText">未连接</span></span>
@@ -4218,7 +4218,7 @@
           btnRename.onclick = () => renameRoom(room.room_id, room.room_name);
 
           const btnUnbind = document.createElement('button');
-          btnUnbind.className = 'secondary danger';
+          btnUnbind.className = 'secondary';
           btnUnbind.textContent = '解绑';
           btnUnbind.onclick = () => unbindRoom(room.room_id, room.room_name);
           
